@@ -12,7 +12,8 @@
       "bundleIdentifier": "com.adviceninja.ninjaloop",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "com.adviceninja.ninjaloop",
@@ -45,7 +46,8 @@
         {
           "faceIDPermission": false
         }
-      ]
+      ],
+      "expo-apple-authentication"
     ],
     "experiments": {
       "typedRoutes": true,

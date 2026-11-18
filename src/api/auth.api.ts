@@ -1,3 +1,5 @@
+import * as AppleAuthentication from "expo-apple-authentication";
+import * as Crypto from "expo-crypto";
 import { useMutation } from "@tanstack/react-query";
 
 import { authClient } from "@/lib/auth-client";
@@ -48,7 +50,7 @@ export function describeAuthError(err: unknown): string {
   }
 
   const message = err instanceof Error ? err.message : String(err ?? "");
-  if (/network request failed|fetch failed|failed to fetch/i.test(message)) {
+  if (/network request failed|fetch failed|failed to fetch|abort|timed? ?out/i.test(message)) {
     return "Can't reach Ninja Loop. Check your connection and try again.";
   }
   return message || "Something went wrong. Please try again.";
@@ -91,6 +93,55 @@ export function useVerifyEmailCode() {
   return useMutation({
     mutationFn: async ({ email, otp }: { email: string; otp: string }) => {
       const { error } = await authClient.signIn.emailOtp({ email, otp });
+      throwIfError(error);
+    },
+    onSuccess: () => refetch(),
+  });
+}
+
+/** Error code when the user closes the Apple sheet. Not an error to show. */
+const APPLE_CANCELLED = "ERR_REQUEST_CANCELED";
+
+/**
+ * Sign in with Apple (iOS only, App Store guideline 4.8).
+ * Native sheet → identity token + the SAME nonce we gave Apple → better-auth
+ * verifies it server-side (`signIn.social` with `idToken`). No browser, no deep link.
+ * Apple only sends the name / email on the FIRST authorization, so we forward the
+ * name then — later sign-ins keep whatever the server already stored.
+ */
+export function useAppleSignIn() {
+  const { refetch } = useSession();
+
+  return useMutation({
+    mutationFn: async () => {
+      const nonce = Crypto.randomUUID();
+      let cred: AppleAuthentication.AppleAuthenticationCredential;
+      try {
+        cred = await AppleAuthentication.signInAsync({
+          requestedScopes: [
+            AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+            AppleAuthentication.AppleAuthenticationScope.EMAIL,
+          ],
+          nonce,
+        });
+      } catch (err) {
+        if ((err as { code?: string })?.code === APPLE_CANCELLED) return;
+        throw err;
+      }
+      if (!cred.identityToken) throw new AuthError("Apple didn't return a sign-in token. Please try again.");
+
+      const firstName = cred.fullName?.givenName ?? undefined;
+      const lastName = cred.fullName?.familyName ?? undefined;
+      const { error } = await authClient.signIn.social({
+        provider: "apple",
+        idToken: {
+          token: cred.identityToken,
+          nonce,
+          ...(firstName || lastName || cred.email
+            ? { user: { name: { firstName, lastName }, email: cred.email ?? undefined } }
+            : {}),
+        },
+      });
       throwIfError(error);
     },
     onSuccess: () => refetch(),

@@ -32,6 +32,9 @@ import { API_BASE_URL, APP_SCHEME } from "@/constants/env";
  */
 export const authClient = createAuthClient({
   baseURL: API_BASE_URL,
+  // Without a timeout a wrong / unreachable baseURL leaves sign-in buttons spinning forever.
+  // (Only the HTTP calls — the browser sheet for Google / GitHub isn't covered by this.)
+  fetchOptions: { timeout: 20_000 },
   plugins: [
     emailOTPClient(),
     expoClient({

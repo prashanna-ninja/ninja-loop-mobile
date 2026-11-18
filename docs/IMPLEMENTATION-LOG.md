@@ -1,5 +1,27 @@
 # Implementation log (newest first)
 
+## 2026-11-18 — Sign in with Apple (iOS)
+
+- `useAppleSignIn` (`src/api/auth.api.ts`): native `expo-apple-authentication` sheet with a
+  random nonce (`expo-crypto`) → `authClient.signIn.social({ provider: "apple", idToken: { token,
+  nonce, user } })`. The server verifies the token (audience = bundle id; better-auth 1.7 accepts
+  the raw nonce, "exact-or-sha256"). The name is forwarded on first authorization only (Apple
+  sends it once). Cancelling the sheet is silent.
+- Login form: Apple's own black "Continue with Apple" button first, iOS only
+  (`isAvailableAsync`), pill radius to match Google / GitHub.
+- `app.json`: `ios.usesAppleSignIn: true` + `expo-apple-authentication` plugin
+  (entitlement `com.apple.developer.applesignin`).
+- **Native change** — needs a new dev build: `npx expo prebuild --clean && npx expo run:ios`.
+  Not testable in Expo Go's Apple flow against our server (token audience would be Expo Go's id).
+- Server side already merged (backend PR #3): enabled only when `APPLE_CLIENT_ID` and
+  `APPLE_CLIENT_SECRET` are set.
+
+## 2026-11-18 — Auth requests time out after 20 s
+
+"Continue with Google" spun forever when `EXPO_PUBLIC_API_BASE_URL` was wrong. `authClient` now
+sets `fetchOptions.timeout = 20_000`; `describeAuthError` maps abort / timeout to
+"Can't reach Ninja Loop". Reminder: `.env` changes need `npx expo start -c`.
+
 ## 2026-11-18 — Fix: "Unmatched route" after Google / GitHub sign-in (iOS)
 
 The OAuth return link `ninjaloop:///?cookie=…` was also handed to Expo Router. At that moment
