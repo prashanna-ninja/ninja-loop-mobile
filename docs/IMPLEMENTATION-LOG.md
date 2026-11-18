@@ -1,5 +1,14 @@
 # Implementation log (newest first)
 
+## 2026-11-18 — Fix: "Unmatched route" after Google / GitHub sign-in (iOS)
+
+The OAuth return link `ninjaloop:///?cookie=…` was also handed to Expo Router. At that moment
+the session hasn't flipped yet, so `/` (signed-in group) is guarded off → Unmatched route.
+- `src/app/+native-intent.tsx`: links carrying `cookie=` are rewritten to `/sign-in`; the
+  session refetch then moves the user to the dashboard via `Stack.Protected`.
+- `src/app/+not-found.tsx`: safety net — any unmatched link redirects to `/` (signed in) or
+  `/sign-in` (signed out) instead of showing the Unmatched page.
+
 ## 2026-11-18 — Signed-in shell: tabs, Dashboard, Alerts, Inbox, Settings
 
 **Decision: no subscriptions or paywall in the app (for now).** Every signed-in user gets the
