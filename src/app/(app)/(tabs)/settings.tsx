@@ -7,6 +7,7 @@ import { useMe } from "@/api/dashboard.api";
 import { AppHeader } from "@/components/app-header";
 import { FadeIn } from "@/components/login/fade-in";
 import { describeLoadError } from "@/components/screen-states";
+import { AppearancePicker } from "@/components/settings/appearance-picker";
 import { SettingsGroup, SettingsRow } from "@/components/settings/settings-group";
 import { API_BASE_URL, PRIVACY_URL, TERMS_URL } from "@/constants/env";
 import { initials } from "@/lib/format";
@@ -81,6 +82,10 @@ export default function SettingsScreen() {
               onPress={() => void WebBrowser.openBrowserAsync(`${API_BASE_URL}/dashboard`)}
             />
           </SettingsGroup>
+        </FadeIn>
+
+        <FadeIn delay={150}>
+          <AppearancePicker />
         </FadeIn>
 
         <FadeIn delay={180}>

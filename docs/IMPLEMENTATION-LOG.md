@@ -1,5 +1,23 @@
 # Implementation log (newest first)
 
+## 2026-11-19 — Appearance: System / Light / Dark switcher
+
+- **Settings → Appearance**: segmented System · Light · Dark (`components/settings/appearance-picker.tsx`).
+  Applies instantly, app-wide, and is remembered.
+- **How:** `lib/theme-preference.ts` calls NativeWind's `colorScheme.set()`, which calls RN
+  `Appearance.setColorScheme()` ("unspecified" for System on RN ≥0.82). That one override drives
+  NativeWind `dark:` tokens, RN `useColorScheme()` → `useThemeColors()`, the navigation theme,
+  status bars and native alerts / keyboard. **Screens don't read the preference** — keep using
+  `useThemeColors()` and token classes and new screens follow the switch for free.
+- Saved in SecureStore (`ninjaloop.theme`; already installed — no new native module). Loaded in
+  `app/_layout.tsx` before the splash hides, so a forced theme never flashes the system one.
+- Audit: no hard-coded colours outside sign-in except white icons on filled primary / destructive
+  buttons (fine in both). Sign-in keeps its fixed light palette by design.
+- Web preview doesn't apply the override (darkMode is "media" there).
+
+**Verified.** tsc ✅ · lint ✅ · expo-doctor 20/20 ✅ · iOS bundle ✅. Not yet tried on the Simulator.
+No new packages, no native changes.
+
 ## 2026-11-19 — Production contract audit; Create workspace, Workspace settings, Reorder
 
 **Audit against the backend source** (`ref/ninja-loop` pulled; routes, `lib/mobile-api.ts`,

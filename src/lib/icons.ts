@@ -45,6 +45,11 @@ export { default as CircleCheck } from "lucide-react-native/icons/circle-check";
 export { default as MessageSquare } from "lucide-react-native/icons/message-square";
 export { default as UserPlus } from "lucide-react-native/icons/user-plus";
 
+/* settings → appearance */
+export { default as Moon } from "lucide-react-native/icons/moon";
+export { default as Smartphone } from "lucide-react-native/icons/smartphone";
+export { default as SunMedium } from "lucide-react-native/icons/sun-medium";
+
 /* states / settings */
 export { default as CloudOff } from "lucide-react-native/icons/cloud-off";
 export { default as ExternalLink } from "lucide-react-native/icons/external-link";

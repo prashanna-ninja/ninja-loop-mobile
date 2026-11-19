@@ -5,10 +5,11 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import * as WebBrowser from "expo-web-browser";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useColorScheme, View } from "react-native";
 
 import { appFonts } from "@/lib/fonts";
+import { loadThemePreference } from "@/lib/theme-preference";
 import { QueryProvider } from "@/providers/query-provider";
 import { SessionProvider, useSession } from "@/providers/session-provider";
 
@@ -25,10 +26,16 @@ function RootNavigator() {
   const [fontsLoaded, fontError] = useFonts(appFonts);
   const { data: session, isPending } = useSession();
   const isSignedIn = !!session?.user;
+  // Saved Light / Dark / System choice (Settings → Appearance), applied before the
+  // splash hides so a forced theme never flashes the system one first.
+  const [themeReady, setThemeReady] = useState(false);
+  useEffect(() => {
+    void loadThemePreference().finally(() => setThemeReady(true));
+  }, []);
 
-  // Hold until BOTH the stored session has resolved and fonts are ready —
+  // Hold until the stored session has resolved, fonts are ready and the theme is applied —
   // otherwise sign-in flashes before the guard redirects a signed-in user.
-  const isBooting = isPending || (!fontsLoaded && !fontError);
+  const isBooting = isPending || (!fontsLoaded && !fontError) || !themeReady;
 
   useEffect(() => {
     if (!isBooting) SplashScreen.hideAsync();

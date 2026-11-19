@@ -18,7 +18,7 @@ Backend: `https://www.ninjaloop.com.au` (Vercel). API reference: `ref/ninja-loop
 | Workspace settings | Board ⚙ (owner / admin) → `workspace/[wid]/settings`: rename (admin), delete after typing the name (owner) | ⚠️ new |
 | Reorder workspaces | Dashboard "Workspaces" ⇅ (2+ workspaces) → `reorder-workspaces`: up / down, Save order | ⚠️ new |
 | Request update | `workspace/[wid]/request` (non-owners; optional task) | ⚠️ |
-| Settings | Profile, open web, version, privacy / terms, sign out, delete account | ⚠️ |
+| Settings | Profile, open web, **Appearance (System / Light / Dark, remembered)**, version, privacy / terms, sign out, delete account | ⚠️ |
 
 **First thing next session — click-test on the iOS Simulator against production.** All API
 calls were checked against the backend *source* on 2026-11-19 (one crash fixed, see log); nothing
@@ -35,7 +35,8 @@ beyond sign-in has been exercised live yet. Run `npx expo start -c` (the `.env` 
 6. ⇅ Reorder with 2+ workspaces → Save → dashboard order matches the web.
 7. Alerts: open a task / Inbox notification, mark all read (badge drops). Inbox: Mark done.
 8. As a non-owner (second account): Request update from board and task → owner's Inbox.
-9. Settings: open web, privacy / terms, sign out → sign back in.
+9. Settings: Appearance → Light / Dark / System (every screen + tab bar + status bar flip; kill and
+   relaunch keeps it); open web, privacy / terms, sign out → sign back in.
 
 ## Not built yet (in rough priority order)
 
