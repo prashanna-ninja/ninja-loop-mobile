@@ -1,4 +1,7 @@
+import { router } from "expo-router";
 import { Text, View } from "react-native";
+
+import { PressableSurface } from "@/components/pressable-surface";
 
 import { useThemeColors, type ThemeColors } from "@/lib/theme";
 import type { DashboardWorkspace, WorkspaceRole } from "@/types/api.types";
@@ -15,8 +18,7 @@ function urgencySignal(w: DashboardWorkspace, c: ThemeColors) {
 
 /**
  * Workspace card (web: DashboardWorkspaces card): monogram, name, role,
- * urgency signal, and the "Next up" task. Reordering is web-only for now.
- * Not pressable yet: the board screen is the next build step.
+ * urgency signal, and the "Next up" task. Tap → the board. Reordering is web-only for now.
  */
 export function WorkspaceCard({ workspace: w }: { workspace: DashboardWorkspace }) {
   const c = useThemeColors();
@@ -24,7 +26,11 @@ export function WorkspaceCard({ workspace: w }: { workspace: DashboardWorkspace 
   const monogram = w.name.trim().slice(0, 1).toUpperCase() || "?";
 
   return (
-    <View className="bg-card border-border gap-3 rounded-2xl border p-4">
+    <PressableSurface
+      onPress={() => router.push({ pathname: "/workspace/[wid]", params: { wid: w.id } })}
+      accessibilityLabel={`Open ${w.name}`}
+      className="bg-card border-border gap-3 rounded-2xl border p-4"
+    >
       <View className="flex-row items-center gap-3">
         <View className="bg-primary/10 h-11 w-11 items-center justify-center rounded-xl">
           <Text className="font-display text-primary text-lg">{monogram}</Text>
@@ -54,6 +60,6 @@ export function WorkspaceCard({ workspace: w }: { workspace: DashboardWorkspace 
           <Text className="text-muted-foreground font-sans text-[13.5px]">No tasks in the queue</Text>
         )}
       </View>
-    </View>
+    </PressableSurface>
   );
 }

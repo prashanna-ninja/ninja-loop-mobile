@@ -1,7 +1,6 @@
 /**
- * Response shapes for `/api/mobile/v1/*`, exactly as specified in
- * docs/01-BACKEND-PROMPT.md §2.3. Dates arrive as ISO strings.
- * When the backend lands, check these against its docs/MOBILE-API.md.
+ * Response shapes for `/api/mobile/v1/*`, checked against the backend's
+ * ref/ninja-loop/docs/MOBILE-API.md (merged in backend PR #3). Dates are ISO strings.
  */
 
 export type WorkspaceRole = "OWNER" | "ADMIN" | "MEMBER";
@@ -9,7 +8,8 @@ export type WorkspaceRole = "OWNER" | "ADMIN" | "MEMBER";
 /* ── GET /me ─────────────────────────────────────────────────────────── */
 
 export type Me = {
-  user: { id: string; name: string; email: string; image: string | null; role: string | null };
+  /** `name` can be "" (email-code sign-ups); `displayName` is the server's ready-made fallback. */
+  user: { id: string; name: string; displayName: string; email: string; image: string | null; role: string | null };
   isAdmin: boolean;
   counts: { unreadNotifications: number; openIncomingRequests: number };
 };
@@ -83,3 +83,64 @@ export type PriorityRequest = {
   fromUser: { name: string; email: string };
   task: { title: string } | null;
 };
+
+/* ── Workspaces ──────────────────────────────────────────────────────── */
+
+/** GET /workspaces/:wid */
+export type Workspace = {
+  id: string;
+  name: string;
+  slug: string;
+  role: WorkspaceRole;
+  memberCount: number;
+  activeTaskCount: number;
+};
+
+/** A person as embedded in tasks / comments. `name` can be "". */
+export type Person = { id: string; name: string; image: string | null };
+
+/** GET /workspaces/:wid/members (sorted by name). */
+export type Member = { id: string; name: string; email: string; image: string | null; role: WorkspaceRole };
+
+/* ── Tasks (the priority queue: position ascending, top = next) ─────── */
+
+/** GET /workspaces/:wid/tasks item. */
+export type TaskSummary = {
+  id: string;
+  title: string;
+  description: string | null;
+  position: number;
+  dueDate: string | null;
+  completedAt: string | null;
+  blockedReason: string | null;
+  snoozeUntil: string | null;
+  createdAt: string;
+  createdBy: Person;
+  assignees: Person[];
+  subTaskCount: number;
+  subTaskDoneCount: number;
+};
+
+export type SubTask = { id: string; title: string; completedAt: string | null; position: number; createdAt: string };
+
+export type TaskLink = { id: string; label: string; url: string; type: "RESOURCE" | "FILE"; createdAt: string };
+
+/** GET / PATCH /workspaces/:wid/tasks/:tid */
+export type TaskDetail = Omit<TaskSummary, "subTaskCount" | "subTaskDoneCount"> & {
+  workspaceId: string;
+  updatedAt: string;
+  subTasks: SubTask[];
+  links: TaskLink[];
+};
+
+/** PATCH body — send any subset. */
+export type TaskPatch = Partial<{
+  title: string;
+  description: string | null;
+  dueDate: string | null;
+  completed: boolean;
+  blockedReason: string | null;
+  snoozeUntil: string | null;
+}>;
+
+export type TaskComment = { id: string; body: string; createdAt: string; user: Person };

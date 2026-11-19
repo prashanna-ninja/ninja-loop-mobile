@@ -49,8 +49,11 @@ Docs: https://docs.expo.dev/eas/index.md
 - Stack: Expo SDK 58 (RN 0.88, React 19.3), Expo Router, NativeWind 4 + React Native Reusables,
   TanStack Query v5, better-auth 1.7.25 (+ `@better-auth/expo`, pinned EXACTLY to the server),
   react-hook-form + zod, Plus Jakarta Sans.
-- Backend work needed by the app lives in `docs/01-BACKEND-PROMPT.md`. Log every meaningful change
-  in `docs/IMPLEMENTATION-LOG.md` (newest first).
+- Backend: `https://www.ninjaloop.com.au` (always WITH `www`). API source of truth:
+  `ref/ninja-loop/docs/MOBILE-API.md` (`docs/01-BACKEND-PROMPT.md` is the original request — done).
+  What works / what's left: `docs/02-STATUS.md`. New-session prompt: `docs/HANDOVER.md`.
+  Log every meaningful change in `docs/IMPLEMENTATION-LOG.md` (newest first) and keep
+  `docs/02-STATUS.md` current.
 - Screens never call `fetch` directly — hooks in `src/api/*.api.ts` → `apiFetch` (`src/lib/api-client.ts`).
   Query keys come from `src/lib/query-keys.ts`. Icons come from `src/lib/icons.ts` (never the lucide barrel).
 - Session: `useSession()` from `src/providers/session-provider.tsx` — never better-auth's React `useSession`.

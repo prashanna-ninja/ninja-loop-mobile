@@ -1,5 +1,46 @@
 # Implementation log (newest first)
 
+## 2026-11-19 — Workspace board, task screen, members, request update; loose ends
+
+**Backend is live.** PR #3 merged and deployed at `https://www.ninjaloop.com.au` (the bare domain
+307-redirects to `www`, so the app must use `www`). Types in `src/types/api.types.ts` were
+checked against the backend's `docs/MOBILE-API.md` (added `Me.user.displayName`, Workspace,
+Member, Person, TaskSummary, TaskDetail, SubTask, TaskLink, TaskComment, TaskPatch).
+
+**New screens** (pushed on the `(app)` stack, slide animation; tabs keep "fade"):
+- `workspace/[wid]` **Board**: one vertical priority queue (the web's snake board flattened).
+  #1 wears the teal "next up" node, and the node is also the complete toggle. Add task bar
+  (new tasks go to the top, server rule), show / hide done, Members, "Request update" for
+  non-owners. Toggling done keeps the list on screen (`placeholderData`, same workspace only).
+- `workspace/[wid]/task/[tid]` **Task**: title + notes (save on blur), complete / reopen,
+  queue position (To top / Up / Down → `PUT …/position` with neighbour ids), due-date and
+  snooze quick picks (no native picker; end of local day, like the web), blocker, assignees
+  (≥1), checklist, links (http(s), add / open / remove), comments, delete, request update about
+  this task.
+- `workspace/[wid]/members` (read-only) and `workspace/[wid]/request` (message ≤4000).
+- **Wired:** dashboard urgent rows → task; workspace cards → board; notifications open their
+  `target` (task / Inbox / web URL), never the web `href`.
+
+**Data layer:** `src/api/workspaces.api.ts` (workspace, members, tasks, create / update / delete
+/ move task, request priority, create workspace) and `src/api/tasks.api.ts` (task detail,
+subtasks, links, assignees, comments). Task PATCH is optimistic on the queue and the detail
+(rolls back on error); subtasks and links are optimistic on the detail. Any task change
+invalidates `qk.workspace(wid)` (whole subtree) + the dashboard.
+
+**Fixed:**
+- `PressableSurface` always set `opacity: 1`, which overrode `opacity-40` disabled styling →
+  disabled buttons looked enabled. It now sets opacity only while pressed.
+- Overlapping avatar initials were clipped.
+- Two `setState`-in-effect lint errors → render-time re-sync.
+
+**Loose ends tightened:** `eas.json` preview / production URL is now `https://www.ninjaloop.com.au`;
+`.env.example` documents the `www` requirement; the README / backend prompt are marked done;
+added `docs/02-STATUS.md` (what's left) and `docs/HANDOVER.md` (new-session prompt).
+
+**Verified.** tsc ✅ · lint ✅ · iOS bundle ✅ · Board and Task screenshotted light + dark against a
+mock of MOBILE-API.md shapes. **Not yet click-tested against production** (next session's first job).
+No new packages.
+
 ## 2026-11-18 — Sign in with Apple (iOS)
 
 - `useAppleSignIn` (`src/api/auth.api.ts`): native `expo-apple-authentication` sheet with a

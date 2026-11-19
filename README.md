@@ -12,7 +12,7 @@ Next.js backend (same database, same Better Auth accounts).
 | Navigation | Expo Router (`src/app`, file-based) with `Stack.Protected` auth guard |
 | Styling | NativeWind 4 (Tailwind 3) + React Native Reusables (`src/components/ui`) |
 | Data | TanStack Query v5 → `apiFetch` → `/api/mobile/v1/*` |
-| Auth | better-auth 1.7.25 + `@better-auth/expo` — Google, GitHub, email one-time code |
+| Auth | better-auth 1.7.25 + `@better-auth/expo` — Apple (iOS), Google, GitHub, email one-time code |
 | Forms | react-hook-form + zod |
 | Font | Plus Jakarta Sans (same as the web) |
 
@@ -20,20 +20,22 @@ Next.js backend (same database, same Better Auth accounts).
 
 ```bash
 npm install
-cp .env.example .env        # set EXPO_PUBLIC_API_BASE_URL (LAN IP / tunnel, not localhost)
+cp .env.example .env        # production backend: https://www.ninjaloop.com.au (with www)
 npx expo start -c
 ```
 
-- **Email-code sign-in works in Expo Go.** Google/GitHub need the server's Phase 1 changes and,
-  for the `ninjaloop://` redirect, a development build: `npx expo run:ios` / `run:android`
-  (or `npx eas-cli@latest build --profile development`).
+- Backend: the Ninja Loop Next.js app, `/api/mobile/v1/*` (reference: `ref/ninja-loop/docs/MOBILE-API.md`).
+- **Email-code sign-in works in Expo Go.** Google / GitHub / Apple need a development build
+  (`npx expo prebuild --clean && npx expo run:ios`, or `npx eas-cli@latest build --profile development`).
+  Apple sign-in needs a real Apple Account signed in on the device / Simulator.
 - Checks before committing: `npm run typecheck && npm run lint && npm run doctor`.
 
 ## Layout
 
 ```
 src/
-├── app/            routes only — (auth)/sign-in, (auth)/verify-code, (app)/…
+├── app/            routes only — (auth)/sign-in, verify-code · (app)/(tabs)/… ·
+│                   (app)/workspace/[wid] (board), …/task/[tid], …/members, …/request
 ├── api/            <domain>.api.ts — TanStack hooks (screens never fetch directly)
 ├── components/     ui/ (RNR primitives), login/, brand/, shared shells
 ├── constants/      env.ts (EXPO_PUBLIC_* only)
@@ -42,6 +44,8 @@ src/
 ├── providers/      query-provider, session-provider
 ├── schemas/        zod schemas    └── types/   inferred TS types
 docs/
-├── 01-BACKEND-PROMPT.md   what the backend must add (auth + /api/mobile/v1)
+├── 01-BACKEND-PROMPT.md   what we asked the backend for (done — backend PR #3)
+├── 02-STATUS.md           what works, what's left, known issues
+├── HANDOVER.md            starting prompt for a new session
 └── IMPLEMENTATION-LOG.md  decisions, newest first
 ```

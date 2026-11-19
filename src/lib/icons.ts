@@ -9,7 +9,7 @@
 
 import type * as React from "react";
 
-export type IconComponent =React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
+export type IconComponent = React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
 
 /* auth */
 export { default as ArrowLeft } from "lucide-react-native/icons/arrow-left";
@@ -51,3 +51,24 @@ export { default as ExternalLink } from "lucide-react-native/icons/external-link
 export { default as Info } from "lucide-react-native/icons/info";
 export { default as RefreshCw } from "lucide-react-native/icons/refresh-cw";
 export { default as UserX } from "lucide-react-native/icons/user-x";
+
+/* board / task detail */
+export { default as AlarmClock } from "lucide-react-native/icons/alarm-clock";
+export { default as ArrowUpToLine } from "lucide-react-native/icons/arrow-up-to-line";
+export { default as Ban } from "lucide-react-native/icons/ban";
+export { default as ChevronDown } from "lucide-react-native/icons/chevron-down";
+export { default as ChevronLeft } from "lucide-react-native/icons/chevron-left";
+export { default as ChevronUp } from "lucide-react-native/icons/chevron-up";
+export { default as Circle } from "lucide-react-native/icons/circle";
+export { default as Eye } from "lucide-react-native/icons/eye";
+export { default as EyeOff } from "lucide-react-native/icons/eye-off";
+export { default as Link } from "lucide-react-native/icons/link";
+export { default as ListChecks } from "lucide-react-native/icons/list-checks";
+export { default as Megaphone } from "lucide-react-native/icons/megaphone";
+export { default as Plus } from "lucide-react-native/icons/plus";
+export { default as Send } from "lucide-react-native/icons/send";
+export { default as Square } from "lucide-react-native/icons/square";
+export { default as SquareCheckBig } from "lucide-react-native/icons/square-check-big";
+export { default as Trash2 } from "lucide-react-native/icons/trash-2";
+export { default as Users } from "lucide-react-native/icons/users";
+export { default as X } from "lucide-react-native/icons/x";

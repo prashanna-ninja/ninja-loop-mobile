@@ -14,8 +14,8 @@ const KIND_ICON: Record<string, IconComponent> = {
 };
 
 /**
- * One notification. Unread = bold title + a primary dot. Tapping marks it read;
- * opening its target (task / requests) is wired up once the board screen exists.
+ * One notification. Unread = bold title + a primary dot. Tapping marks it read
+ * and opens its target (see alerts.tsx `openTarget`).
  */
 export function NotificationRow({ item, onPress }: { item: NotificationItem; onPress: () => void }) {
   const c = useThemeColors();

@@ -1,6 +1,8 @@
+import { router } from "expo-router";
 import { Text, View } from "react-native";
 
 import { DueBadge } from "@/components/due-badge";
+import { PressableSurface } from "@/components/pressable-surface";
 import { getDueUrgency, urgencyColor } from "@/lib/due-urgency";
 import { Layers } from "@/lib/icons";
 import { useThemeColors } from "@/lib/theme";
@@ -10,8 +12,7 @@ import type { DashboardUrgentTask } from "@/types/api.types";
  * One urgent task (web: DashboardUrgentTasks row): urgency strip on the left,
  * queue position, title, workspace, due badge. #1 wears the teal "next up" node
  * from the sign-in hero — the same queue, now with your real work in it.
- *
- * Not pressable yet: the task sheet arrives with the board screen.
+ * Tap → the task screen.
  */
 export function UrgentTaskRow({ task, index }: { task: DashboardUrgentTask; index: number }) {
   const c = useThemeColors();
@@ -19,7 +20,13 @@ export function UrgentTaskRow({ task, index }: { task: DashboardUrgentTask; inde
   const isNext = index === 0;
 
   return (
-    <View className="bg-card border-border flex-row overflow-hidden rounded-2xl border">
+    <PressableSurface
+      onPress={() =>
+        router.push({ pathname: "/workspace/[wid]/task/[tid]", params: { wid: task.businessId, tid: task.id } })
+      }
+      accessibilityLabel={`${task.title}, ${task.businessName}`}
+      className="bg-card border-border flex-row overflow-hidden rounded-2xl border"
+    >
       <View style={{ width: 4, backgroundColor: urgencyColor(u.level, c) }} />
       <View className="flex-1 flex-row gap-3.5 px-4 py-3.5">
         <View
@@ -49,6 +56,6 @@ export function UrgentTaskRow({ task, index }: { task: DashboardUrgentTask; inde
           </View>
         </View>
       </View>
-    </View>
+    </PressableSurface>
   );
 }

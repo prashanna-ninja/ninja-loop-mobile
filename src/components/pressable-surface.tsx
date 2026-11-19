@@ -31,7 +31,9 @@ export function PressableSurface({
         onPressOut?.(e);
       }}
       className={cn(className)}
-      style={{ opacity: pressed && !disabled ? pressedOpacity : 1 }}
+      // Only set opacity WHILE pressed — a constant `opacity: 1` would override an
+      // `opacity-40` className (disabled look) on the same element.
+      style={pressed && !disabled ? { opacity: pressedOpacity } : undefined}
       {...props}
     />
   );

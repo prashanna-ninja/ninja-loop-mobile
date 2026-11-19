@@ -1,5 +1,10 @@
 # Backend changes for Ninja Loop mobile — prompt
 
+> **Status (2026-11-19): DONE.** Implemented in the backend repo (PR #3, "feat/mobile-api") and
+> deployed at `https://www.ninjaloop.com.au`. The source of truth for the API is now the
+> backend's own `docs/MOBILE-API.md` (`ref/ninja-loop/docs/MOBILE-API.md` after `git pull`).
+> Kept for history; push devices (§3.x) are still not built server-side.
+
 Paste everything below the line into Claude Code (or hand it to whoever works on the
 Ninja Loop Next.js repo). It is self-contained. Phase 1 unblocks the login screen; Phase 2
 unblocks every other screen; Phase 3 is required before App Store submission.

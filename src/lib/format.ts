@@ -36,3 +36,8 @@ export function greeting(now = new Date()): string {
   if (h < 18) return "Good afternoon";
   return "Good evening";
 }
+
+/** A person's name for display — names can be "" for email-code sign-ups (MOBILE-API.md). */
+export function personName(p?: { name?: string | null; email?: string | null } | null, fallback = "Someone"): string {
+  return p?.name?.trim() || p?.email?.split("@")[0] || fallback;
+}

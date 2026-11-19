@@ -125,7 +125,15 @@ export function useAppleSignIn() {
           nonce,
         });
       } catch (err) {
-        if ((err as { code?: string })?.code === APPLE_CANCELLED) return;
+        const code = (err as { code?: string })?.code;
+        if (code === APPLE_CANCELLED) return;
+        // AuthorizationError 1000: no Apple Account signed in on the device, or the build
+        // isn't signed with the Sign in with Apple entitlement (common on the Simulator).
+        if (code === "ERR_REQUEST_UNKNOWN") {
+          throw new AuthError(
+            "Apple sign-in isn't available right now. Check you're signed in to your Apple Account in Settings, or use another option.",
+          );
+        }
         throw err;
       }
       if (!cred.identityToken) throw new AuthError("Apple didn't return a sign-in token. Please try again.");
