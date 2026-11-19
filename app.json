@@ -47,7 +47,16 @@
           "faceIDPermission": false
         }
       ],
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Ninja Loop uses your photos so you can attach them to tasks.",
+          "cameraPermission": "Ninja Loop uses the camera so you can photograph something and attach it to a task.",
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

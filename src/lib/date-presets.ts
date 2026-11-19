@@ -1,7 +1,7 @@
 import { addDays, addWeeks, endOfDay, isFriday, nextFriday, nextMonday, setHours, startOfDay } from "date-fns";
 
 /**
- * Quick picks instead of a native date picker (no extra native module).
+ * Quick picks (the task screen also has a native picker for any day / time).
  * Due dates are END of the local day — the same convention the web uses
  * (e.g. "2026-11-20T06:59:59.999Z" = 23:59:59.999 in Sydney).
  * Snoozes wake at 9am local, like the web's default snooze time.

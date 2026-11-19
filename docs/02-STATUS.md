@@ -12,7 +12,7 @@ Backend: `https://www.ninjaloop.com.au` (Vercel). API reference: `ref/ninja-loop
 | Alerts | Infinite list, mark read / all read, tap opens the target (task / Inbox / web URL) | ⚠️ |
 | Inbox | Incoming priority requests, Mark done | ⚠️ |
 | Board | `workspace/[wid]`: queue, add task (top), **hold & drag to reprioritise** (auto-scrolls at the edges, `PUT …/position`), complete / reopen from the node, show done | ⚠️ |
-| Task | `workspace/[wid]/task/[tid]`: title / notes, complete, move (top / up / down), due, blocked, snooze, assignees, checklist, links, comments, delete, request update | ⚠️ |
+| Task | `workspace/[wid]/task/[tid]`: title / notes, complete, move (top / up / down), due (quick picks + **calendar**), blocked, snooze (quick picks + **date & time**), assignees, checklist (**drag to reorder, rename, clear done**), links + **file upload (photo / camera / file → R2)**, comments, delete, request update | ⚠️ new parts need the rebuild |
 | Members | `workspace/[wid]/members` (read-only) | ⚠️ |
 | Create workspace | Dashboard "Workspaces" → **+ New** (also under the empty state) → `workspace/new` → opens the new board | ⚠️ new |
 | Workspace settings | Board ⚙ (owner / admin) → `workspace/[wid]/settings`: rename (admin), delete after typing the name (owner) | ⚠️ new |
@@ -39,7 +39,12 @@ beyond sign-in has been exercised live yet. Run `npx expo start -c` (the `.env` 
    board; normal swipes still scroll; pull to refresh mid-list.
 7. Alerts: open a task / Inbox notification, mark all read (badge drops). Inbox: Mark done.
 8. As a non-owner (second account): Request update from board and task → owner's Inbox.
-9. Settings: Appearance → Light / Dark / System (every screen + tab bar + status bar flip; kill and
+9. Task uploads (after `npx expo prebuild --clean && npx expo run:ios`): Photo → pick → progress
+   bar → file row appears (web shows it too, opens from the R2 URL); Camera (permission prompt);
+   File (Files app, e.g. a PDF). Checklist: hold an item → drag → order sticks after refresh and on
+   web; tap text → rename; tick two → Clear done. Due → Pick a date… (custom chip shows the day);
+   Snooze → Pick a time… (past times refused).
+10. Settings: Appearance → Light / Dark / System (every screen + tab bar + status bar flip; kill and
    relaunch keeps it); open web, privacy / terms, sign out → sign back in.
 
 ## Not built yet (in rough priority order)
@@ -48,13 +53,10 @@ beyond sign-in has been exercised live yet. Run `npx expo start -c` (the `.env` 
    invite: `GET /invites/:token` + `POST /invites/:token/accept`. Needs universal links for
    `https://www.ninjaloop.com.au/invite/<token>` (app.json `ios.associatedDomains` +
    `android.intentFilters`, plus `apple-app-site-association` / `assetlinks.json` on the server).
-2. **File upload** from the phone (3-step presigned flow in MOBILE-API.md; needs
-   `expo-document-picker` / `expo-image-picker` → rebuild). Links work today.
-3. **Custom due date / time** — today quick picks only (Today, Tomorrow, Friday, Next Monday,
-   In 2 weeks; snooze: Tomorrow 9am, Monday 9am, In a week). A real picker needs
-   `@react-native-community/datetimepicker` (native → rebuild).
-4. **Push notifications** — backend not built (no `PushDevice` / `POST /devices` yet).
-5. Edit / delete comments, subtask rename / reorder, "clear completed" subtasks — API exists.
+2. **Push notifications** — backend not built (no `PushDevice` / `POST /devices` yet).
+3. Not possible: edit / delete comments, remove members / change roles, leave workspace —
+   neither the web nor the mobile API has them.
+4. Billing / upgrade — web-only (Stripe); keep it off the app (App Store in-app purchase rules).
 
 ## Before the App Store
 

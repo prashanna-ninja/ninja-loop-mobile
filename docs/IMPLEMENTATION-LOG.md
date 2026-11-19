@@ -1,5 +1,29 @@
 # Implementation log (newest first)
 
+## 2026-11-19 — Task: file upload (R2), checklist polish, native date / time picker
+
+**⚠️ Native change — rebuild needed:** added `expo-image-picker`, `@react-native-community/datetimepicker`
+and `expo-file-system` (now a direct dependency); app.json plugins: `@react-native-community/datetimepicker`,
+`expo-image-picker` (photo + camera usage strings, microphone off).
+`npx expo prebuild --clean && npx expo run:ios`.
+
+- **File upload** (Links & files → Photo / Camera / File): `useUploadTaskFile` in `api/tasks.api.ts`
+  runs the 3-step flow from MOBILE-API.md: `POST /api/upload/presigned` (old non-mobile route; its
+  `{ error: "msg" }` errors already handled by `apiFetch`) → native binary `PUT` to the presigned R2
+  URL via expo-file-system `File.upload` (streamed from disk, progress bar) → `POST …/links`
+  `{ type: "FILE" }`. The PUT's `Content-Type` must equal the signed one. 100 MB client cap.
+  Pickers in `lib/pick-file.ts`: photo library (JPEG/H.264 on iOS, not HEIC), camera (permission →
+  Settings prompt if refused), any document (expo-file-system's built-in `File.pickFileAsync`, so no
+  expo-document-picker). FILE links show an image / file icon.
+- **Checklist**: hold and drag to reorder (shared `SortableList`, auto-scrolls the task screen;
+  `PUT …/subtasks/order` with the full order, optimistic), tap the text to rename (`PATCH {title}`),
+  "Clear done" (`DELETE …/subtasks?completed=1`, confirm). Ticking moved to the checkbox only.
+  Task screen ScrollView → always-mounted `Animated.ScrollView` (scroll locked while dragging).
+- **Due / snooze**: "Pick a date…" (native calendar, end of local day like the web; a custom day
+  shows as its own selected chip) and "Pick a time…" for snooze (date + time, future only).
+  `components/task/date-time-picker.tsx`: iOS bottom sheet with the inline picker; Android system
+  date → time dialogs.
+
 ## 2026-11-19 — Fix: Workspaces tab and board lists were invisible
 
 **Cause:** `SortableList` fades in once every row has reported its height. Rows wrote their

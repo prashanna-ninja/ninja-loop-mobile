@@ -60,6 +60,13 @@ export { default as UserX } from "lucide-react-native/icons/user-x";
 /* workspace create / settings / reorder */
 export { default as GripVertical } from "lucide-react-native/icons/grip-vertical";
 
+/* task: uploads + date picker */
+export { default as CalendarPlus } from "lucide-react-native/icons/calendar-plus";
+export { default as Camera } from "lucide-react-native/icons/camera";
+export { default as FileText } from "lucide-react-native/icons/file-text";
+export { default as ImageIcon } from "lucide-react-native/icons/image";
+export { default as Paperclip } from "lucide-react-native/icons/paperclip";
+
 /* board / task detail */
 export { default as AlarmClock } from "lucide-react-native/icons/alarm-clock";
 export { default as ArrowUpToLine } from "lucide-react-native/icons/arrow-up-to-line";

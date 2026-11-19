@@ -1,7 +1,10 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
+import { File as DeviceFile, UploadType } from "expo-file-system";
+import * as React from "react";
 
 import { invalidateWorkspace } from "@/api/workspaces.api";
-import { apiFetch } from "@/lib/api-client";
+import { ApiError, apiFetch } from "@/lib/api-client";
+import type { PickedFile } from "@/lib/pick-file";
 import { qk } from "@/lib/query-keys";
 import type { SubTask, TaskComment, TaskDetail, TaskLink } from "@/types/api.types";
 
@@ -87,6 +90,44 @@ export function useDeleteSubtask(wid: string, tid: string) {
   );
 }
 
+export function useRenameSubtask(wid: string, tid: string) {
+  return useTaskMutation(
+    wid,
+    tid,
+    ({ sid, title }: { sid: string; title: string }) =>
+      apiFetch<SubTask>(`${taskPath(wid, tid)}/subtasks/${sid}`, { method: "PATCH", body: JSON.stringify({ title }) }),
+    (t, { sid, title }) => ({ ...t, subTasks: t.subTasks.map((s) => (s.id === sid ? { ...s, title } : s)) }),
+  );
+}
+
+/** PUT …/subtasks/order — the FULL new order (server rejects unknown / temp ids). */
+export function useReorderSubtasks(wid: string, tid: string) {
+  return useTaskMutation(
+    wid,
+    tid,
+    (orderedIds: string[]) =>
+      apiFetch<void>(`${taskPath(wid, tid)}/subtasks/order`, { method: "PUT", body: JSON.stringify({ orderedIds }) }),
+    (t, orderedIds) => {
+      const byId = new Map(t.subTasks.map((s) => [s.id, s]));
+      const next = orderedIds.flatMap((id, i) => {
+        const s = byId.get(id);
+        return s ? [{ ...s, position: i * 1000 }] : [];
+      });
+      return { ...t, subTasks: next };
+    },
+  );
+}
+
+/** DELETE …/subtasks?completed=1 — removes every ticked item. */
+export function useClearCompletedSubtasks(wid: string, tid: string) {
+  return useTaskMutation(
+    wid,
+    tid,
+    (_: void) => apiFetch<void>(`${taskPath(wid, tid)}/subtasks?completed=1`, { method: "DELETE" }),
+    (t) => ({ ...t, subTasks: t.subTasks.filter((s) => !s.completedAt) }),
+  );
+}
+
 /* ── Links ───────────────────────────────────────────────────────────── */
 
 export function useAddLink(wid: string, tid: string) {
@@ -105,6 +146,62 @@ export function useDeleteLink(wid: string, tid: string) {
     (lid: string) => apiFetch<void>(`${taskPath(wid, tid)}/links/${lid}`, { method: "DELETE" }),
     (t, lid) => ({ ...t, links: t.links.filter((l) => l.id !== lid) }),
   );
+}
+
+/** Files bigger than this are refused before uploading (phone data + time). */
+export const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
+
+type Presigned = { url: string; publicUrl: string; key: string };
+
+/**
+ * Upload a file from the phone and attach it to the task (MOBILE-API.md "Uploading a file"):
+ * 1. POST /api/upload/presigned (old route, NOT /mobile/v1; errors are `{ error: "msg" }`,
+ *    which apiFetch already handles) → a 1-hour presigned PUT to R2 + the public URL.
+ * 2. PUT the bytes straight to R2 — native upload (expo-file-system), streamed from disk.
+ *    Content-Type MUST equal the one we signed with, or R2 rejects the signature.
+ * 3. POST …/links { type: "FILE", url: publicUrl }.
+ * `progress` is 0…1 while uploading, null otherwise.
+ */
+export function useUploadTaskFile(wid: string, tid: string) {
+  const qc = useQueryClient();
+  const [progress, setProgress] = React.useState<number | null>(null);
+
+  const upload = useMutation({
+    mutationFn: async (file: PickedFile) => {
+      if (file.size && file.size > MAX_UPLOAD_BYTES) {
+        throw new ApiError(413, "That file is over 100 MB. Share it as a link instead.");
+      }
+      setProgress(0);
+      const signed = await apiFetch<Presigned>("/api/upload/presigned", {
+        method: "POST",
+        body: JSON.stringify({ businessId: wid, taskId: tid, filename: file.name, contentType: file.mimeType }),
+      });
+      const res = await new DeviceFile(file.uri).upload(signed.url, {
+        httpMethod: "PUT",
+        uploadType: UploadType.BINARY_CONTENT,
+        mimeType: file.mimeType,
+        headers: { "Content-Type": file.mimeType },
+        onProgress: ({ bytesSent, totalBytes }) => {
+          if (totalBytes > 0) setProgress(Math.min(1, bytesSent / totalBytes));
+        },
+      });
+      if (res.status < 200 || res.status >= 300) {
+        throw new ApiError(res.status, `Storage refused the upload (${res.status}). Try again.`);
+      }
+      return apiFetch<TaskLink>(`${taskPath(wid, tid)}/links`, {
+        method: "POST",
+        body: JSON.stringify({ label: file.name, url: signed.publicUrl, type: "FILE" }),
+      });
+    },
+    onSuccess: (link) =>
+      qc.setQueryData<TaskDetail>(qk.task(wid, tid), (t) => (t ? { ...t, links: [...t.links, link] } : t)),
+    onSettled: () => {
+      setProgress(null);
+      invalidateWorkspace(qc, wid);
+    },
+  });
+
+  return { upload, progress };
 }
 
 /* ── Assignees ───────────────────────────────────────────────────────── */

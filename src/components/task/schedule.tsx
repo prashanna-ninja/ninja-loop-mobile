@@ -1,7 +1,9 @@
+import { addDays, endOfDay, setHours, startOfDay } from "date-fns";
 import * as React from "react";
-import { Text, TextInput, View } from "react-native";
+import { Alert, Text, TextInput, View } from "react-native";
 
 import { DueBadge } from "@/components/due-badge";
+import { useDateTimePicker } from "@/components/task/date-time-picker";
 import { Chip, TaskSection, TextAction } from "@/components/task/section";
 import { duePresets, formatDateTime, isSnoozed, snoozePresets } from "@/lib/date-presets";
 import { getDueUrgency } from "@/lib/due-urgency";
@@ -11,9 +13,13 @@ import type { TaskDetail, TaskPatch } from "@/types/api.types";
 
 type Props = { task: TaskDetail; onPatch: (patch: TaskPatch) => void; disabled?: boolean };
 
-/** Due date — quick picks (end of local day, like the web) or clear. */
+const shortDay = (iso: string) =>
+  new Date(iso).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+
+/** Due date — quick picks or any day from the calendar (end of local day, like the web), or clear. */
 export function DueSection({ task, onPatch, disabled }: Props) {
   const presets = duePresets();
+  const picker = useDateTimePicker();
   const u = getDueUrgency(task.dueDate);
   // A preset is "selected" when it lands on the same calendar day as the current due date.
   const sameDay = (iso: string) =>
@@ -39,10 +45,25 @@ export function DueSection({ task, onPatch, disabled }: Props) {
             onPress={() => onPatch({ dueDate: p.iso })}
           />
         ))}
+        {/* A custom day shows as its own selected chip ("Wed 3 Dec"); tap to change it. */}
+        <Chip
+          label={task.dueDate && !presets.some((p) => sameDay(p.iso)) ? shortDay(task.dueDate) : "Pick a date…"}
+          selected={!!task.dueDate && !presets.some((p) => sameDay(p.iso))}
+          disabled={disabled}
+          onPress={() =>
+            picker.open({
+              mode: "date",
+              title: "Due date",
+              value: task.dueDate ? new Date(task.dueDate) : new Date(),
+              onPick: (d) => onPatch({ dueDate: endOfDay(d).toISOString() }),
+            })
+          }
+        />
         {task.dueDate ? (
           <Chip label="Clear" tone="danger" disabled={disabled} onPress={() => onPatch({ dueDate: null })} />
         ) : null}
       </View>
+      {picker.sheet}
     </TaskSection>
   );
 }
@@ -50,6 +71,18 @@ export function DueSection({ task, onPatch, disabled }: Props) {
 /** Snooze — hides the task from dashboard urgency until then. */
 export function SnoozeSection({ task, onPatch, disabled }: Props) {
   const snoozed = isSnoozed(task.snoozeUntil);
+  const picker = useDateTimePicker();
+  const pickCustom = () =>
+    picker.open({
+      mode: "datetime",
+      title: "Snooze until",
+      value: snoozed && task.snoozeUntil ? new Date(task.snoozeUntil) : setHours(startOfDay(addDays(new Date(), 1)), 9),
+      minimumDate: new Date(),
+      onPick: (d) => {
+        if (d.getTime() <= Date.now()) return Alert.alert("Pick a time in the future");
+        onPatch({ snoozeUntil: d.toISOString() });
+      },
+    });
   return (
     <TaskSection title="Snooze" icon={AlarmClock}>
       <Text className="text-muted-foreground font-sans text-[13px]">
@@ -61,10 +94,12 @@ export function SnoozeSection({ task, onPatch, disabled }: Props) {
         {snoozePresets().map((p) => (
           <Chip key={p.key} label={p.label} disabled={disabled} onPress={() => onPatch({ snoozeUntil: p.iso })} />
         ))}
+        <Chip label="Pick a time…" disabled={disabled} onPress={pickCustom} />
         {snoozed ? (
           <Chip label="Wake now" tone="danger" disabled={disabled} onPress={() => onPatch({ snoozeUntil: null })} />
         ) : null}
       </View>
+      {picker.sheet}
     </TaskSection>
   );
 }
