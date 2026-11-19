@@ -34,7 +34,7 @@ export default function NewWorkspaceScreen() {
         <ScrollView contentContainerStyle={{ padding: 20, gap: 18 }} keyboardShouldPersistTaps="handled">
           <Text className="text-muted-foreground font-sans text-[14.5px] leading-[21px]">
             A workspace is one priority queue — a client, a team or a project. You&apos;ll be its owner and can
-            invite people from the web.
+            invite people from Members.
           </Text>
           <TextField
             label="Name"

@@ -19,6 +19,10 @@ export const qk = {
   /** GET /workspaces/:wid (+ members). Prefix `workspace(wid)` invalidates all of a workspace. */
   workspace: (wid: string) => ["workspace", wid] as const,
   members: (wid: string) => ["workspace", wid, "members"] as const,
+  /** GET /workspaces/:wid/invites — pending invites (admin). */
+  invites: (wid: string) => ["workspace", wid, "invites"] as const,
+  /** GET /invites/:token — invite preview before accepting. */
+  invite: (token: string) => ["invite", token] as const,
   /** GET /workspaces/:wid/tasks?showDone= — the queue. */
   tasks: (wid: string, showDone: boolean) => ["workspace", wid, "tasks", { showDone }] as const,
   /** Prefix for both showDone variants (invalidation / optimistic updates). */

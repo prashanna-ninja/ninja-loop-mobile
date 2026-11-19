@@ -102,6 +102,30 @@ export type Person = { id: string; name: string; image: string | null };
 /** GET /workspaces/:wid/members (sorted by name). */
 export type Member = { id: string; name: string; email: string; image: string | null; role: WorkspaceRole };
 
+/* ── Invites ─────────────────────────────────────────────────────────── */
+
+/** GET /workspaces/:wid/invites (admin) — pending, newest first. Never includes the token. */
+export type Invite = {
+  id: string;
+  email: string;
+  role: WorkspaceRole;
+  expiresAt: string;
+  createdAt: string;
+  expired: boolean;
+  invitedBy: { id: string; name: string; email: string } | null;
+};
+
+/** GET /invites/:token — what to show before "Accept". */
+export type InvitePreview = {
+  workspaceName: string;
+  inviterName: string;
+  email: string;
+  role: WorkspaceRole;
+  expired: boolean;
+  accepted: boolean;
+  emailMatches: boolean;
+};
+
 /* ── Tasks (the priority queue: position ascending, top = next) ─────── */
 
 /** GET /workspaces/:wid/tasks item. */

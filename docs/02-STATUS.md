@@ -13,7 +13,8 @@ Backend: `https://www.ninjaloop.com.au` (Vercel). API reference: `ref/ninja-loop
 | Inbox | Incoming priority requests, Mark done | ⚠️ |
 | Board | `workspace/[wid]`: queue, add task (top), **hold & drag to reprioritise** (auto-scrolls at the edges, `PUT …/position`), complete / reopen from the node, show done | ⚠️ |
 | Task | `workspace/[wid]/task/[tid]`: title / notes, complete, move (top / up / down), due (quick picks + **calendar**), blocked, snooze (quick picks + **date & time**), assignees, checklist (**drag to reorder, rename, clear done**), links + **file upload (photo / camera / file → R2)**, comments, delete, request update | ⚠️ new parts need the rebuild |
-| Members | `workspace/[wid]/members` (read-only) | ⚠️ |
+| Members + invites | `workspace/[wid]/members`: list; owners / admins **invite by email (role), see / revoke pending invites** | ⚠️ new |
+| Accept invite | `invite/[token]` from an invite link or **Workspaces → Join** (paste link): join / used / expired / wrong-account; signed-out links open after sign-in | ⚠️ new; tapping links needs the server files (`docs/03-…`) + rebuild |
 | Create workspace | Dashboard "Workspaces" → **+ New** (also under the empty state) → `workspace/new` → opens the new board | ⚠️ new |
 | Workspace settings | Board ⚙ (owner / admin) → `workspace/[wid]/settings`: rename (admin), delete after typing the name (owner) | ⚠️ new |
 | Workspaces tab | 2nd tab: all workspaces in your order; **hold & drag to reorder** (springs + haptics, `PUT /workspaces/order` on drop, optimistic); tap → board; + New. VoiceOver: Move up / down actions | ⚠️ new |
@@ -44,15 +45,18 @@ beyond sign-in has been exercised live yet. Run `npx expo start -c` (the `.env` 
    File (Files app, e.g. a PDF). Checklist: hold an item → drag → order sticks after refresh and on
    web; tap text → rename; tick two → Clear done. Due → Pick a date… (custom chip shows the day);
    Snooze → Pick a time… (past times refused).
-10. Settings: Appearance → Light / Dark / System (every screen + tab bar + status bar flip; kill and
+10. Invites (2 accounts): Board → Members → invite B's email as Member → pending row (revoke one
+   to check) → B: Workspaces → Join → paste the email link → Join → lands on the board, workspace
+   in B's lists. Wrong account: open A's invite link while signed in as C → "Sign out and use …".
+   With the server files live + rebuild: tap the link in Mail → app opens the invite (also
+   when signed out: sign in → invite opens).
+11. Settings: Appearance → Light / Dark / System (every screen + tab bar + status bar flip; kill and
    relaunch keeps it); open web, privacy / terms, sign out → sign back in.
 
 ## Not built yet (in rough priority order)
 
-1. **Invites** — list / send / revoke (`/workspaces/:wid/invites`, admin) and **accepting** an
-   invite: `GET /invites/:token` + `POST /invites/:token/accept`. Needs universal links for
-   `https://www.ninjaloop.com.au/invite/<token>` (app.json `ios.associatedDomains` +
-   `android.intentFilters`, plus `apple-app-site-association` / `assetlinks.json` on the server).
+1. **Server: universal-link files** — `docs/03-BACKEND-UNIVERSAL-LINKS.md` (AASA + assetlinks).
+   Until then invite links open the web page; "Join with a link" works in the app.
 2. **Push notifications** — backend not built (no `PushDevice` / `POST /devices` yet).
 3. Not possible: edit / delete comments, remove members / change roles, leave workspace —
    neither the web nor the mobile API has them.

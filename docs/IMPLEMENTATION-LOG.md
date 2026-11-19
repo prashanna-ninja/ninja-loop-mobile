@@ -1,5 +1,27 @@
 # Implementation log (newest first)
 
+## 2026-11-19 — Invites: send / revoke, accept, invite links
+
+**⚠️ Native change — rebuild needed:** app.json `ios.associatedDomains`
+(`applinks:www.ninjaloop.com.au`) + Android `intentFilters` (https `/invite/*`, autoVerify).
+`npx expo prebuild --clean && npx expo run:ios`. Universal links also need the two server files in
+`docs/03-BACKEND-UNIVERSAL-LINKS.md` (AASA + assetlinks; needs the Apple Team ID / Android SHA-256).
+
+- **Members** (`workspace/[wid]/members`) is now a ScrollView. Owners / admins get **Invite someone**
+  (email + Member / Admin / Owner, like the web; `POST …/invites`, "Invite sent to …") and
+  **Pending invites** (`GET …/invites`: role · expires in / Expired · by whom; revoke with confirm,
+  optimistic `DELETE …/invites/:id`). Members just see the list. `api/invites.api.ts`.
+- **Accept** (`invite/[token]`): `GET /invites/:token` → "X invited you to join <workspace> as
+  <role>" + what the role can do → **Join** (`POST …/accept`) → replaces itself with the board,
+  workspace lists refreshed. States: already used, expired, **wrong account** ("sent to x — Sign
+  out and use x": keeps the invite pending, so it reopens after signing in with that email).
+- **Getting there**: `+native-intent` catches `…/invite/<token>` (universal link,
+  `ninjaloop://invite/<token>`, with or without a leading slash), parks the token
+  (`lib/pending-invite.ts`) and goes to `/`; the signed-in layout pushes the invite screen as soon
+  as there's a session, so a link tapped while signed out opens right after sign-in.
+  **Join with a link** (`invite/index`, Workspaces tab → Join): paste the email link or the token,
+  which works before the universal-link files are live.
+
 ## 2026-11-19 — Task: file upload (R2), checklist polish, native date / time picker
 
 **⚠️ Native change — rebuild needed:** added `expo-image-picker`, `@react-native-community/datetimepicker`

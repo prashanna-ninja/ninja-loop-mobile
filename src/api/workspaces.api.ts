@@ -177,7 +177,7 @@ export function useRequestPriority(wid: string) {
 }
 
 /** After a workspace is created / renamed / deleted / reordered: every list that shows workspaces. */
-function invalidateWorkspaceLists(qc: QueryClient) {
+export function invalidateWorkspaceLists(qc: QueryClient) {
   void qc.invalidateQueries({ queryKey: qk.dashboard() });
   void qc.invalidateQueries({ queryKey: qk.workspaces() });
 }

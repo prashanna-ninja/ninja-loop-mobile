@@ -10,7 +10,7 @@ import { PressableSurface } from "@/components/pressable-surface";
 import { describeLoadError, EmptyState, ErrorState } from "@/components/screen-states";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SortableWorkspaceList } from "@/components/workspaces/sortable-workspace-list";
-import { Layers, Plus } from "@/lib/icons";
+import { Layers, Plus, UserPlus } from "@/lib/icons";
 import { useThemeColors } from "@/lib/theme";
 
 /**
@@ -69,6 +69,15 @@ export default function WorkspacesScreen() {
               </Text>
             </View>
             <PressableSurface
+              onPress={() => router.push("/invite")}
+              accessibilityLabel="Join a workspace with an invite link"
+              hitSlop={6}
+              className="border-border bg-card flex-row items-center gap-1 rounded-full border px-3.5 py-2"
+            >
+              <UserPlus size={15} color={c.foreground} strokeWidth={2.2} />
+              <Text className="font-sans-semibold text-foreground text-[13.5px]">Join</Text>
+            </PressableSurface>
+            <PressableSurface
               onPress={() => router.push("/workspace/new")}
               accessibilityLabel="New workspace"
               hitSlop={6}
@@ -93,7 +102,7 @@ export default function WorkspacesScreen() {
             <EmptyState
               icon={Layers}
               title="No workspaces yet"
-              body="Create one with + New, or accept an invite on the web."
+              body="Create one with + New, or tap Join and paste an invite link."
             />
           </View>
         ) : (
