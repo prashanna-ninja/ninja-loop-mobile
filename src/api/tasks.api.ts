@@ -181,8 +181,12 @@ export function useUploadTaskFile(wid: string, tid: string) {
         uploadType: UploadType.BINARY_CONTENT,
         mimeType: file.mimeType,
         headers: { "Content-Type": file.mimeType },
+        // ⚠️ iOS reports these as BigInt (the types say number) — BigInt / BigInt is integer
+        // division and Math.min(BigInt) throws. Convert first.
         onProgress: ({ bytesSent, totalBytes }) => {
-          if (totalBytes > 0) setProgress(Math.min(1, bytesSent / totalBytes));
+          const sent = Number(bytesSent);
+          const total = Number(totalBytes);
+          if (total > 0) setProgress(Math.min(1, sent / total));
         },
       });
       if (res.status < 200 || res.status >= 300) {

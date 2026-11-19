@@ -12,6 +12,8 @@ and `expo-file-system` (now a direct dependency); app.json plugins: `@react-nati
   `{ error: "msg" }` errors already handled by `apiFetch`) → native binary `PUT` to the presigned R2
   URL via expo-file-system `File.upload` (streamed from disk, progress bar) → `POST …/links`
   `{ type: "FILE" }`. The PUT's `Content-Type` must equal the signed one. 100 MB client cap.
+  ⚠️ `onProgress` gives `bytesSent` / `totalBytes` as **BigInt on iOS** (typed as number) — convert
+  with `Number()` before dividing, or `Math.min` throws "Cannot convert BigInt to number".
   Pickers in `lib/pick-file.ts`: photo library (JPEG/H.264 on iOS, not HEIC), camera (permission →
   Settings prompt if refused), any document (expo-file-system's built-in `File.pickFileAsync`, so no
   expo-document-picker). FILE links show an image / file icon.
