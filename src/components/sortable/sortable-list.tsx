@@ -222,13 +222,30 @@ export function SortableList<T>({
     opacity: ready.get(),
   }));
 
+  // ⚠️ Heights are tracked in a JS ref and pushed whole. On the JS thread a shared value's
+  // `.set()` is ASYNC and `.get()` returns a cached copy — rows measured in the same frame
+  // would each read `{}` and overwrite each other, so the list never became "ready" and
+  // stayed invisible (opacity 0). Never read-modify-write a shared value from JS.
+  const heightsRef = React.useRef<Heights>({});
+  const readyRef = React.useRef(false);
+  const reveal = React.useCallback(() => {
+    if (readyRef.current) return;
+    readyRef.current = true;
+    ready.set(withTiming(1, { duration: 180 }));
+  }, [ready]);
+
   const onMeasured = (id: string, height: number) => {
-    const current = heights.get();
-    if (current[id] === height) return;
-    const next = { ...current, [id]: height };
-    heights.set(next);
-    if (ready.get() === 0 && ids.every((k) => next[k] !== undefined)) ready.set(withTiming(1, { duration: 180 }));
+    if (heightsRef.current[id] === height) return;
+    heightsRef.current = { ...heightsRef.current, [id]: height };
+    heights.set(heightsRef.current);
+    if (ids.every((k) => heightsRef.current[k] !== undefined)) reveal();
   };
+
+  // Safety net: never leave the list hidden if a row somehow doesn't report its layout.
+  React.useEffect(() => {
+    const t = setTimeout(reveal, 400);
+    return () => clearTimeout(t);
+  }, [reveal]);
 
   const shared = {
     order,

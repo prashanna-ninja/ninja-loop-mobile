@@ -1,5 +1,17 @@
 # Implementation log (newest first)
 
+## 2026-11-19 — Fix: Workspaces tab and board lists were invisible
+
+**Cause:** `SortableList` fades in once every row has reported its height. Rows wrote their
+height with a read-modify-write on a shared value **from the JS thread** (`heights.get()` →
+`heights.set({...})`). In Reanimated 4, JS-side `.set()` is async and `.get()` returns a cached
+copy, so rows measured in the same frame each read `{}` and overwrote each other → never "all
+measured" → opacity stayed 0. Data loaded fine; nothing was visible.
+
+**Fix:** heights live in a JS ref and the whole object is pushed to the shared value; plus a
+400 ms safety reveal so the list can never stay hidden. **Rule: never read-modify-write a shared
+value on the JS thread** — keep JS-side state in a ref/state, or do the update in a worklet.
+
 ## 2026-11-19 — Drag to reorder the task queue; shared SortableList
 
 - **`components/sortable/sortable-list.tsx`** — one generic hold-and-drag list for the board
