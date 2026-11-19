@@ -4,7 +4,7 @@ import { Pressable, type ColorValue } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useMe } from "@/api/dashboard.api";
-import { Bell, Inbox, LayoutDashboard, Settings, type IconComponent } from "@/lib/icons";
+import { Bell, Inbox, Layers, LayoutDashboard, Settings, type IconComponent } from "@/lib/icons";
 import { useThemeColors } from "@/lib/theme";
 
 function TabIcon({ icon: Icon, color, focused }: { icon: IconComponent; color: ColorValue; focused: boolean }) {
@@ -87,6 +87,13 @@ export default function TabsLayout() {
         options={{
           title: "Dashboard",
           tabBarIcon: ({ color, focused }) => <TabIcon icon={LayoutDashboard} color={color} focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="workspaces"
+        options={{
+          title: "Workspaces",
+          tabBarIcon: ({ color, focused }) => <TabIcon icon={Layers} color={color} focused={focused} />,
         }}
       />
       <Tabs.Screen

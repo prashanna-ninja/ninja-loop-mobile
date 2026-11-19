@@ -7,6 +7,7 @@ import { StatusBar } from "expo-status-bar";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect, useState } from "react";
 import { useColorScheme, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { appFonts } from "@/lib/fonts";
 import { loadThemePreference } from "@/lib/theme-preference";
@@ -62,10 +63,14 @@ function RootNavigator() {
 
 export default function RootLayout() {
   return (
-    <QueryProvider>
-      <SessionProvider>
-        <RootNavigator />
-      </SessionProvider>
-    </QueryProvider>
+    // Required by react-native-gesture-handler (v3 throws in dev without it) — drag to
+    // reorder in the Workspaces tab.
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <QueryProvider>
+        <SessionProvider>
+          <RootNavigator />
+        </SessionProvider>
+      </QueryProvider>
+    </GestureHandlerRootView>
   );
 }

@@ -13,7 +13,7 @@ import { FadeIn } from "@/components/login/fade-in";
 import { PressableSurface } from "@/components/pressable-surface";
 import { EmptyState, ErrorState, SectionHeader } from "@/components/screen-states";
 import { firstName, greeting } from "@/lib/format";
-import { ArrowUpDown, CircleCheck, Layers, Plus } from "@/lib/icons";
+import { CircleCheck, Layers, Plus } from "@/lib/icons";
 import { qk } from "@/lib/query-keys";
 import { useThemeColors } from "@/lib/theme";
 import { useSession } from "@/providers/session-provider";
@@ -103,21 +103,7 @@ export default function DashboardScreen() {
               <SectionHeader
                 title="Workspaces"
                 count={data.workspaces.length || undefined}
-                right={
-                  <>
-                    {data.workspaces.length > 1 ? (
-                      <PressableSurface
-                        onPress={() => router.push("/reorder-workspaces")}
-                        accessibilityLabel="Reorder workspaces"
-                        hitSlop={6}
-                        className="h-9 w-9 items-center justify-center rounded-full"
-                      >
-                        <ArrowUpDown size={18} color={c.mutedForeground} strokeWidth={2} />
-                      </PressableSurface>
-                    ) : null}
-                    <NewWorkspaceButton />
-                  </>
-                }
+                right={<NewWorkspaceButton />}
               />
               {data.workspaces.length === 0 ? (
                 <View className="bg-card border-border items-center rounded-2xl border pb-6">

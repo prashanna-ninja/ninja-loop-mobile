@@ -6,10 +6,10 @@ import { PressableSurface } from "@/components/pressable-surface";
 import { useThemeColors, type ThemeColors } from "@/lib/theme";
 import type { DashboardWorkspace, WorkspaceRole } from "@/types/api.types";
 
-const ROLE_LABEL: Record<WorkspaceRole, string> = { OWNER: "Owner", ADMIN: "Admin", MEMBER: "Member" };
+export const ROLE_LABEL: Record<WorkspaceRole, string> = { OWNER: "Owner", ADMIN: "Admin", MEMBER: "Member" };
 
 /** The single most pressing signal for a workspace (web: UrgencyBar). */
-function urgencySignal(w: DashboardWorkspace, c: ThemeColors) {
+export function urgencySignal(w: DashboardWorkspace, c: ThemeColors) {
   if (w.overdueCount > 0) return { text: `${w.overdueCount} overdue`, color: c.destructive };
   if (w.dueTodayCount > 0) return { text: `${w.dueTodayCount} due today`, color: c.today };
   if (w.dueSoonCount > 0) return { text: `${w.dueSoonCount} this week`, color: c.thisWeek };

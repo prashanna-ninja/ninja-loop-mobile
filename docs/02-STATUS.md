@@ -7,7 +7,7 @@ Backend: `https://www.ninjaloop.com.au` (Vercel). API reference: `ref/ninja-loop
 | Area | Screens / behaviour | Verified against the real server? |
 | --- | --- | --- |
 | Sign-in | Apple (iOS, native), Google, GitHub (browser → `ninjaloop://`), email 6-digit code | ✅ user signed in on the iOS Simulator |
-| Shell | Tabs: Dashboard · Alerts · Inbox · Settings, badges from `GET /me` | ⚠️ not explicitly |
+| Shell | Tabs: Dashboard · Workspaces · Alerts · Inbox · Settings, badges from `GET /me` | ⚠️ not explicitly |
 | Dashboard | Insights strip, urgent tasks (→ task), workspaces (→ board) | ⚠️ |
 | Alerts | Infinite list, mark read / all read, tap opens the target (task / Inbox / web URL) | ⚠️ |
 | Inbox | Incoming priority requests, Mark done | ⚠️ |
@@ -16,7 +16,7 @@ Backend: `https://www.ninjaloop.com.au` (Vercel). API reference: `ref/ninja-loop
 | Members | `workspace/[wid]/members` (read-only) | ⚠️ |
 | Create workspace | Dashboard "Workspaces" → **+ New** (also under the empty state) → `workspace/new` → opens the new board | ⚠️ new |
 | Workspace settings | Board ⚙ (owner / admin) → `workspace/[wid]/settings`: rename (admin), delete after typing the name (owner) | ⚠️ new |
-| Reorder workspaces | Dashboard "Workspaces" ⇅ (2+ workspaces) → `reorder-workspaces`: up / down, Save order | ⚠️ new |
+| Workspaces tab | 2nd tab: all workspaces in your order; **hold & drag to reorder** (springs + haptics, `PUT /workspaces/order` on drop, optimistic); tap → board; + New. VoiceOver: Move up / down actions | ⚠️ new |
 | Request update | `workspace/[wid]/request` (non-owners; optional task) | ⚠️ |
 | Settings | Profile, open web, **Appearance (System / Light / Dark, remembered)**, version, privacy / terms, sign out, delete account | ⚠️ |
 
@@ -32,7 +32,9 @@ beyond sign-in has been exercised live yet. Run `npx expo start -c` (the `.env` 
    comment, delete task.
 5. Board ⚙ → rename (dashboard + board title update) → Members row → delete "Test WS" (type the
    name) → back on the dashboard, workspace gone.
-6. ⇅ Reorder with 2+ workspaces → Save → dashboard order matches the web.
+6. Workspaces tab (2+ workspaces): hold a row ~0.2 s → lifts + haptic → drag past others (they
+   slide, tick each slot) → release → Dashboard and web show the new order. Quick tap opens the
+   board; normal swipes still scroll; pull to refresh mid-list.
 7. Alerts: open a task / Inbox notification, mark all read (badge drops). Inbox: Mark done.
 8. As a non-owner (second account): Request update from board and task → owner's Inbox.
 9. Settings: Appearance → Light / Dark / System (every screen + tab bar + status bar flip; kill and

@@ -1,5 +1,33 @@
 # Implementation log (newest first)
 
+## 2026-11-19 — Workspaces tab with drag-to-reorder
+
+- **New tab** `(tabs)/workspaces.tsx` (2nd, Layers icon): `GET /workspaces` in your personal
+  order, + New, pull to refresh, empty / error / skeleton states.
+- **Drag to reorder** (`components/workspaces/sortable-workspace-list.tsx`), built on what was
+  already installed — Reanimated 4.7 + Gesture Handler 3.3 + Worklets (in package.json since the
+  first commit, so **no rebuild**). Hold 200 ms (`activateAfterLongPress`) → row lifts (scale
+  1.035, shadow, primary border, medium haptic) → others spring out of the way with a selection
+  tick per slot → release springs into place → one `PUT /workspaces/order` (existing optimistic
+  `useReorderWorkspaces`, also reorders the Dashboard; error → Alert + rollback re-slots rows).
+  Quick tap → board (`useExclusiveGestures(pan, tap)`); swipes before the hold scroll; the
+  ScrollView is locked while a row is lifted. Fixed row height (88) → slot maths, no measuring.
+  VoiceOver: Open / Move up / Move down accessibility actions.
+- **Gotchas (GH v3 is hook-based — not v2's `Gesture.Pan()`, now "Legacy*"):**
+  `usePanGesture({ onBegin, onActivate, onUpdate, onFinalize })` + `<GestureDetector gesture>`;
+  callbacks run on the UI thread only if they're worklets (`"worklet"` directive); call JS with
+  `scheduleOnRN` from `react-native-worklets`. `GestureDetector` **throws in dev without
+  `GestureHandlerRootView`** → added at the root (`app/_layout.tsx`). React Compiler lint rejects
+  `sv.value = x` in hook callbacks → use `sv.get()` / `sv.set()`. Don't put `className` on an
+  `Animated.View` that also has animated styles — nest a plain `View`.
+- Replaced the earlier up/down `reorder-workspaces` screen (deleted) and the Dashboard ⇅ button.
+  `ROLE_LABEL` / `urgencySignal` are now exported from `dashboard/workspace-card.tsx`.
+
+**Verified.** tsc ✅ · lint ✅ · expo-doctor 20/20 ✅ · iOS + Android bundles ✅. **Drag feel not
+yet tried on a device** (Windows session) — tune `HOLD_MS` / `SPRING` in the list file if needed.
+No new packages, no native changes. Not yet: auto-scroll when dragging near the screen edge
+(only matters with more workspaces than fit on screen).
+
 ## 2026-11-19 — Appearance: System / Light / Dark switcher
 
 - **Settings → Appearance**: segmented System · Light · Dark (`components/settings/appearance-picker.tsx`).

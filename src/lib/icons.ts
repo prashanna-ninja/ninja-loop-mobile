@@ -58,7 +58,7 @@ export { default as RefreshCw } from "lucide-react-native/icons/refresh-cw";
 export { default as UserX } from "lucide-react-native/icons/user-x";
 
 /* workspace create / settings / reorder */
-export { default as ArrowUpDown } from "lucide-react-native/icons/arrow-up-down";
+export { default as GripVertical } from "lucide-react-native/icons/grip-vertical";
 
 /* board / task detail */
 export { default as AlarmClock } from "lucide-react-native/icons/alarm-clock";
