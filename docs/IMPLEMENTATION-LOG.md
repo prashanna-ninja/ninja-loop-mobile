@@ -1,5 +1,28 @@
 # Implementation log (newest first)
 
+## 2026-11-19 — Drag to reorder the task queue; shared SortableList
+
+- **`components/sortable/sortable-list.tsx`** — one generic hold-and-drag list for the board
+  and the Workspaces tab (replaces the fixed-height workspace-only version from earlier today):
+  - **Variable row heights**: each row is measured (onLayout); slots = summed heights. Rows
+    spring when anything above changes (drag, add, complete, a "Next up" label appearing).
+    The list fades in once every row is measured, so there's no first-frame jump.
+  - **Auto-scroll** near the viewport edges (`scroll` prop: `useAnimatedRef` + `useScrollOffset`
+    + content height; `useFrameCallback` + `scrollTo`, offset compensated in the drag maths).
+  - Insertion point = the lifted row's centre against the others' midpoints.
+  - Rows keep their own Pressables; `ctx.guard(fn)` swallows taps during and ~350 ms after a
+    drag, so the release never also opens / completes. VoiceOver: Move up / down actions.
+- **Board** (`workspace/[wid]/index.tsx`): FlatList → `Animated.ScrollView`; open queue is a
+  `SortableList`, completed tasks stay a plain list under "Done". Drop → existing optimistic
+  `useMoveTask` with neighbours `afterId = order[to-1]`, `beforeId = order[to+1]` (position
+  order, per MOBILE-API.md). Hint text: "N in the queue · hold and drag to reorder".
+  The task screen's To top / Up / Down stay.
+- Trade-off: the queue is no longer virtualised (ScrollView renders every open task). Fine for
+  a priority queue (tens of tasks); revisit if a workspace ever holds hundreds.
+
+**Verified.** tsc ✅ · lint ✅ · expo-doctor 20/20 ✅ · iOS + Android bundles ✅. Not yet tried on
+a device. No new packages, no native changes.
+
 ## 2026-11-19 — Workspaces tab with drag-to-reorder
 
 - **New tab** `(tabs)/workspaces.tsx` (2nd, Layers icon): `GET /workspaces` in your personal
@@ -26,7 +49,7 @@
 **Verified.** tsc ✅ · lint ✅ · expo-doctor 20/20 ✅ · iOS + Android bundles ✅. **Drag feel not
 yet tried on a device** (Windows session) — tune `HOLD_MS` / `SPRING` in the list file if needed.
 No new packages, no native changes. Not yet: auto-scroll when dragging near the screen edge
-(only matters with more workspaces than fit on screen).
+(only matters with more workspaces than fit on screen). → done in the next entry.
 
 ## 2026-11-19 — Appearance: System / Light / Dark switcher
 

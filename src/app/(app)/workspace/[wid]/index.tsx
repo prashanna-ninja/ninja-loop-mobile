@@ -1,35 +1,45 @@
 import { router, useLocalSearchParams } from "expo-router";
 import * as React from "react";
-import { Alert, FlatList, KeyboardAvoidingView, Platform, RefreshControl, Text, View } from "react-native";
+import { Alert, KeyboardAvoidingView, Platform, RefreshControl, Text, View } from "react-native";
+import Animated, { useAnimatedRef, useScrollOffset, useSharedValue } from "react-native-reanimated";
 
 import { describeLoadError, EmptyState, ErrorState } from "@/components/screen-states";
 import { AddTaskBar } from "@/components/board/add-task-bar";
 import { QueueRow } from "@/components/board/queue-row";
 import { PressableSurface } from "@/components/pressable-surface";
 import { HeaderIconButton, ScreenHeader } from "@/components/screen-header";
+import { SortableList } from "@/components/sortable/sortable-list";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCreateTask, useUpdateTask, useWorkspace, useWorkspaceTasks } from "@/api/workspaces.api";
+import { useCreateTask, useMoveTask, useUpdateTask, useWorkspace, useWorkspaceTasks } from "@/api/workspaces.api";
 import { Eye, EyeOff, ListTodo, Megaphone, Settings, Users } from "@/lib/icons";
 import { useThemeColors } from "@/lib/theme";
+import type { TaskSummary } from "@/types/api.types";
 
 const ROLE_LABEL = { OWNER: "Owner", ADMIN: "Admin", MEMBER: "Member" } as const;
 
 /**
  * Workspace board — web /b/[slug]/board as one vertical priority queue:
- * the top task is what to do next. Add tasks (they go to the top), tap the
- * node to complete, tap a task to open it (reorder, dates, checklist, comments).
- * Non-owners can ask the owner to review priorities ("Request update").
+ * the top task is what to do next. Add tasks (they go to the top), hold and drag
+ * to reprioritise (PUT …/position with the new neighbours), tap the node to
+ * complete, tap a task to open it. Non-owners can "Request update".
  */
 export default function BoardScreen() {
   const { wid } = useLocalSearchParams<{ wid: string }>();
   const c = useThemeColors();
   const [showDone, setShowDone] = React.useState(false);
   const [refreshing, setRefreshing] = React.useState(false);
+  const [dragging, setDragging] = React.useState(false);
+
+  // Lets a lifted task auto-scroll the queue near the top / bottom edge.
+  const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  const scrollOffset = useScrollOffset(scrollRef);
+  const contentHeight = useSharedValue(0);
 
   const workspace = useWorkspace(wid);
   const tasks = useWorkspaceTasks(wid, showDone);
   const createTask = useCreateTask(wid);
   const updateTask = useUpdateTask(wid);
+  const moveTask = useMoveTask(wid);
 
   const rows = tasks.data ?? [];
   const open = rows.filter((t) => !t.completedAt);
@@ -55,18 +65,18 @@ export default function BoardScreen() {
       { onError: (err) => Alert.alert("Couldn't add the task", describeLoadError(err)) },
     );
 
+  // Neighbours in position order (top → bottom); omit afterId = top, omit beforeId = bottom.
+  const onReorder = (orderedIds: string[], { id, to }: { id: string; to: number }) =>
+    moveTask.mutate(
+      { tid: id, toIndex: to, afterId: orderedIds[to - 1], beforeId: orderedIds[to + 1] },
+      { onError: (err) => Alert.alert("Couldn't move the task", describeLoadError(err)) },
+    );
+
+  const openTask = (tid: string) => router.push({ pathname: "/workspace/[wid]/task/[tid]", params: { wid, tid } });
+
   const subtitle = ws
     ? `${ROLE_LABEL[ws.role]} · ${ws.memberCount} ${ws.memberCount === 1 ? "member" : "members"}`
     : undefined;
-
-  // One list: open queue, then (optionally) a "Done" header + completed tasks.
-  type Item = { kind: "task"; id: string; index: number } | { kind: "done-header" };
-  const items: Item[] = [
-    ...open.map((t, i) => ({ kind: "task" as const, id: t.id, index: i })),
-    ...(showDone && done.length ? [{ kind: "done-header" as const }] : []),
-    ...(showDone ? done.map((t) => ({ kind: "task" as const, id: t.id, index: -1 })) : []),
-  ];
-  const byId = new Map(rows.map((t) => [t.id, t]));
 
   return (
     <View className="bg-background flex-1">
@@ -98,71 +108,89 @@ export default function BoardScreen() {
       />
 
       <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === "ios" ? "padding" : undefined}>
-        <FlatList
-          data={tasks.isPending || tasks.isError ? [] : items}
-          keyExtractor={(it) => (it.kind === "task" ? it.id : "done-header")}
+        <Animated.ScrollView
+          ref={scrollRef}
+          scrollEnabled={!dragging}
+          onContentSizeChange={(_w, h) => contentHeight.set(h)}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ padding: 16, gap: 10, paddingBottom: 48, flexGrow: 1 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
-          ListHeaderComponent={
-            <View className="mb-1.5 gap-3">
-              <AddTaskBar onAdd={addTask} pending={createTask.isPending} />
-              <View className="flex-row items-center justify-between px-1">
-                <Text className="text-muted-foreground font-sans text-[12.5px]">
-                  {open.length > 0 ? `${open.length} in the queue · top is next` : " "}
-                </Text>
-                {canRequest ? (
-                  <PressableSurface
-                    onPress={() => router.push({ pathname: "/workspace/[wid]/request", params: { wid } })}
-                    accessibilityLabel="Ask the owner to review priorities"
-                    className="flex-row items-center gap-1.5 py-1"
-                  >
-                    <Megaphone size={14} color={c.primary} strokeWidth={2.2} />
-                    <Text className="font-sans-semibold text-primary text-[13px]">Request update</Text>
-                  </PressableSurface>
-                ) : null}
-              </View>
+        >
+          <View className="mb-1.5 gap-3">
+            <AddTaskBar onAdd={addTask} pending={createTask.isPending} />
+            <View className="flex-row items-center justify-between px-1">
+              <Text className="text-muted-foreground font-sans flex-1 text-[12.5px]" numberOfLines={1}>
+                {open.length > 1
+                  ? `${open.length} in the queue · hold and drag to reorder`
+                  : open.length === 1
+                    ? "1 in the queue · top is next"
+                    : " "}
+              </Text>
+              {canRequest ? (
+                <PressableSurface
+                  onPress={() => router.push({ pathname: "/workspace/[wid]/request", params: { wid } })}
+                  accessibilityLabel="Ask the owner to review priorities"
+                  className="flex-row items-center gap-1.5 py-1 pl-2"
+                >
+                  <Megaphone size={14} color={c.primary} strokeWidth={2.2} />
+                  <Text className="font-sans-semibold text-primary text-[13px]">Request update</Text>
+                </PressableSurface>
+              ) : null}
             </View>
-          }
-          renderItem={({ item }) => {
-            if (item.kind === "done-header") {
-              return (
-                <Text className="text-muted-foreground font-sans-semibold mt-3 px-1 text-xs uppercase tracking-wider">
-                  Done · {done.length}
-                </Text>
-              );
-            }
-            const task = byId.get(item.id);
-            if (!task) return null;
-            return (
-              <QueueRow
-                task={task}
-                index={item.index}
-                onToggleDone={() => toggleDone(task.id, !task.completedAt)}
-                onOpen={() =>
-                  router.push({ pathname: "/workspace/[wid]/task/[tid]", params: { wid, tid: task.id } })
-                }
+          </View>
+
+          {tasks.isPending ? (
+            <View className="gap-2.5">
+              {[0, 1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-[78px] rounded-2xl" />
+              ))}
+            </View>
+          ) : tasks.isError ? (
+            <ErrorState error={tasks.error} onRetry={() => void tasks.refetch()} />
+          ) : open.length === 0 && !(showDone && done.length) ? (
+            <EmptyState
+              icon={ListTodo}
+              title="The queue is empty"
+              body="Add a task above. Whatever sits at the top is what to do next."
+            />
+          ) : (
+            <>
+              <SortableList<TaskSummary>
+                data={open}
+                keyOf={(t) => t.id}
+                labelOf={(t) => t.title}
+                onReorder={onReorder}
+                onDragChange={setDragging}
+                scroll={{ ref: scrollRef, offset: scrollOffset, contentHeight }}
+                renderItem={(task, { index, guard }) => (
+                  <QueueRow
+                    task={task}
+                    index={index}
+                    onToggleDone={guard(() => toggleDone(task.id, true))}
+                    onOpen={guard(() => openTask(task.id))}
+                  />
+                )}
               />
-            );
-          }}
-          ListEmptyComponent={
-            tasks.isPending ? (
-              <View className="gap-2.5">
-                {[0, 1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-[78px] rounded-2xl" />
-                ))}
-              </View>
-            ) : tasks.isError ? (
-              <ErrorState error={tasks.error} onRetry={() => void tasks.refetch()} />
-            ) : (
-              <EmptyState
-                icon={ListTodo}
-                title="The queue is empty"
-                body="Add a task above. Whatever sits at the top is what to do next."
-              />
-            )
-          }
-        />
+
+              {showDone && done.length ? (
+                <>
+                  <Text className="text-muted-foreground font-sans-semibold mt-3 px-1 text-xs uppercase tracking-wider">
+                    Done · {done.length}
+                  </Text>
+                  {done.map((task) => (
+                    <QueueRow
+                      key={task.id}
+                      task={task}
+                      index={-1}
+                      onToggleDone={() => toggleDone(task.id, false)}
+                      onOpen={() => openTask(task.id)}
+                    />
+                  ))}
+                </>
+              ) : null}
+            </>
+          )}
+        </Animated.ScrollView>
       </KeyboardAvoidingView>
     </View>
   );

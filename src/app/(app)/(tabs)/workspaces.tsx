@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import * as React from "react";
-import { Alert, RefreshControl, ScrollView, Text, View } from "react-native";
+import { Alert, RefreshControl, Text, View } from "react-native";
+import Animated, { useAnimatedRef, useScrollOffset, useSharedValue } from "react-native-reanimated";
 
 import { useReorderWorkspaces, useWorkspaces } from "@/api/workspaces.api";
 import { AppHeader } from "@/components/app-header";
@@ -23,6 +24,10 @@ export default function WorkspacesScreen() {
   const reorder = useReorderWorkspaces();
   const [dragging, setDragging] = React.useState(false);
   const [refreshing, setRefreshing] = React.useState(false);
+  // Lets a lifted row auto-scroll the page near the top / bottom edge.
+  const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  const scrollOffset = useScrollOffset(scrollRef);
+  const contentHeight = useSharedValue(0);
 
   const list = workspaces.data ?? [];
 
@@ -48,8 +53,10 @@ export default function WorkspacesScreen() {
   return (
     <View className="bg-background flex-1">
       <AppHeader />
-      <ScrollView
+      <Animated.ScrollView
+        ref={scrollRef}
         scrollEnabled={!dragging}
+        onContentSizeChange={(_w, h) => contentHeight.set(h)}
         contentContainerStyle={{ padding: 20, gap: 18, paddingBottom: 40 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.primary} colors={[c.primary]} />}
       >
@@ -96,10 +103,11 @@ export default function WorkspacesScreen() {
               onReorder={onReorder}
               onOpen={onOpen}
               onDragChange={setDragging}
+              scroll={{ ref: scrollRef, offset: scrollOffset, contentHeight }}
             />
           </FadeIn>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   );
 }

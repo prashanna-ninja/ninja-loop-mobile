@@ -11,7 +11,7 @@ Backend: `https://www.ninjaloop.com.au` (Vercel). API reference: `ref/ninja-loop
 | Dashboard | Insights strip, urgent tasks (→ task), workspaces (→ board) | ⚠️ |
 | Alerts | Infinite list, mark read / all read, tap opens the target (task / Inbox / web URL) | ⚠️ |
 | Inbox | Incoming priority requests, Mark done | ⚠️ |
-| Board | `workspace/[wid]`: queue, add task (top), complete / reopen from the node, show done | ⚠️ |
+| Board | `workspace/[wid]`: queue, add task (top), **hold & drag to reprioritise** (auto-scrolls at the edges, `PUT …/position`), complete / reopen from the node, show done | ⚠️ |
 | Task | `workspace/[wid]/task/[tid]`: title / notes, complete, move (top / up / down), due, blocked, snooze, assignees, checklist, links, comments, delete, request update | ⚠️ |
 | Members | `workspace/[wid]/members` (read-only) | ⚠️ |
 | Create workspace | Dashboard "Workspaces" → **+ New** (also under the empty state) → `workspace/new` → opens the new board | ⚠️ new |
@@ -26,7 +26,9 @@ beyond sign-in has been exercised live yet. Run `npx expo start -c` (the `.env` 
 
 1. Dashboard: counts, urgent rows → task, workspace cards → board, pull to refresh.
 2. **+ New** → create "Test WS" → lands on its empty board → Back → it's on the dashboard.
-3. Board: add 3 tasks (newest on top), complete via the node, show / hide done, pull to refresh.
+3. Board: add 3 tasks (newest on top; the others slide down), hold one → drag it to the top →
+   "Next up" + numbers update, web agrees; with 10+ tasks drag to the screen edge → auto-scrolls;
+   quick taps on the node / body still complete / open (never after a drag); show / hide done.
 4. Task: edit title / notes (blur saves), To top / Up / Down, due + snooze picks, block / unblock,
    **change assignees** (was the crash), checklist add / tick / delete, add / open / remove link,
    comment, delete task.
@@ -46,15 +48,13 @@ beyond sign-in has been exercised live yet. Run `npx expo start -c` (the `.env` 
    invite: `GET /invites/:token` + `POST /invites/:token/accept`. Needs universal links for
    `https://www.ninjaloop.com.au/invite/<token>` (app.json `ios.associatedDomains` +
    `android.intentFilters`, plus `apple-app-site-association` / `assetlinks.json` on the server).
-2. **Drag to reorder** the queue (today: To top / Up / Down on the task screen). Would need
-   `react-native-draggable-flatlist` or a Reanimated gesture list (native → rebuild).
-3. **File upload** from the phone (3-step presigned flow in MOBILE-API.md; needs
+2. **File upload** from the phone (3-step presigned flow in MOBILE-API.md; needs
    `expo-document-picker` / `expo-image-picker` → rebuild). Links work today.
-4. **Custom due date / time** — today quick picks only (Today, Tomorrow, Friday, Next Monday,
+3. **Custom due date / time** — today quick picks only (Today, Tomorrow, Friday, Next Monday,
    In 2 weeks; snooze: Tomorrow 9am, Monday 9am, In a week). A real picker needs
    `@react-native-community/datetimepicker` (native → rebuild).
-5. **Push notifications** — backend not built (no `PushDevice` / `POST /devices` yet).
-6. Edit / delete comments, subtask rename / reorder, "clear completed" subtasks — API exists.
+4. **Push notifications** — backend not built (no `PushDevice` / `POST /devices` yet).
+5. Edit / delete comments, subtask rename / reorder, "clear completed" subtasks — API exists.
 
 ## Before the App Store
 
