@@ -1,3 +1,4 @@
+import type * as React from "react";
 import { Text, View } from "react-native";
 
 import { PressableSurface } from "@/components/pressable-surface";
@@ -8,7 +9,9 @@ import { useThemeColors } from "@/lib/theme";
 /** Copy for a failed query that a person can act on. */
 export function describeLoadError(error: unknown): string {
   if (error instanceof ApiError) {
-    if (error.status === 404) return "This isn't available on the server yet.";
+    // A mobile-API 404 carries a code + a safe message ("Workspace not found." — also what
+    // non-members get). No code = the route itself is missing (e.g. an older server).
+    if (error.status === 404) return error.code ? error.message : "This isn't available on the server yet.";
     if (error.status >= 500) return "Ninja Loop had a problem. Try again in a moment.";
     return error.message;
   }
@@ -52,13 +55,26 @@ export function EmptyState({ icon: Icon, title, body }: { icon: IconComponent; t
   );
 }
 
-/** Title row above a list section: "Urgent tasks · 4". */
-export function SectionHeader({ title, count, caption }: { title: string; count?: number; caption?: string }) {
+/** Title row above a list section: "Urgent tasks · 4", optional actions on the right. */
+export function SectionHeader({
+  title,
+  count,
+  caption,
+  right,
+}: {
+  title: string;
+  count?: number;
+  caption?: string;
+  right?: React.ReactNode;
+}) {
   return (
     <View className="gap-0.5">
-      <View className="flex-row items-baseline gap-2">
-        <Text className="font-sans-bold text-foreground text-lg tracking-tight">{title}</Text>
-        {count != null ? <Text className="font-sans-semibold text-muted-foreground text-sm">{count}</Text> : null}
+      <View className="flex-row items-center gap-2">
+        <View className="flex-1 flex-row items-baseline gap-2">
+          <Text className="font-sans-bold text-foreground text-lg tracking-tight">{title}</Text>
+          {count != null ? <Text className="font-sans-semibold text-muted-foreground text-sm">{count}</Text> : null}
+        </View>
+        {right ? <View className="flex-row items-center gap-1">{right}</View> : null}
       </View>
       {caption ? <Text className="text-muted-foreground font-sans text-[13px] leading-5">{caption}</Text> : null}
     </View>

@@ -1,5 +1,39 @@
 # Implementation log (newest first)
 
+## 2026-11-19 — Production contract audit; Create workspace, Workspace settings, Reorder
+
+**Audit against the backend source** (`ref/ninja-loop` pulled; routes, `lib/mobile-api.ts`,
+`lib/mobile-serializers.ts`, services). Every app call matches method / path / body / response,
+except:
+- **Crash fixed:** `PUT …/tasks/:tid/assignees` returns TaskDetail *without* `links`. The app wrote
+  it straight into the task cache → `links.map` on undefined the moment you changed an assignee.
+  `useSetAssignees` now keeps the cached links (`src/api/tasks.api.ts`). Backend bug noted in STATUS.
+- **`.env` fixed:** `EXPO_PUBLIC_API_BASE_URL` was still the `your-ninja-loop-url.example.com`
+  placeholder → now `https://www.ninjaloop.com.au`. Restart with `npx expo start -c`.
+- **404 copy:** `describeLoadError` said "This isn't available on the server yet." for every 404.
+  Now a mobile-API 404 (has `code`) shows the server's message ("Workspace not found.", also what
+  non-members get); only a code-less 404 (route missing) keeps the old copy.
+- Checked OK: no middleware / Origin check on `/api/mobile/*` (session read directly), 204 bodies,
+  error shape, `X-Timezone`, `URL.hostname` exists in RN 0.88's polyfill (links form is fine).
+- Backend (not fixable here): dashboard `nextPriorityTaskTitle` can be a completed task.
+
+**New screens**
+- `workspace/new` — name (1–100) → `POST /workspaces` → `router.replace` to the new board (Back =
+  dashboard). Entry: **+ New** on the dashboard "Workspaces" header and under its empty state.
+- `workspace/[wid]/settings` — board header ⚙ for OWNER / ADMIN. Rename (`PATCH`, admin; save
+  button appears only when changed, "Saved" tick after); Members row; owner-only Danger zone:
+  type the exact name (web's DeleteWorkspaceDialog rule) → `DELETE` → `router.dismissTo("/")`.
+  The deleted workspace's cache is removed ~1 s later so mounted screens don't flash a 404.
+- `reorder-workspaces` — dashboard ⇅ (2+ workspaces). Up / down on a local order, one
+  `PUT /workspaces/order` on Save, optimistic on the dashboard + `GET /workspaces` cache.
+- Shared: `components/form/text-field.tsx` (themed single-line input), `SectionHeader` gained a
+  `right` slot, `qk.workspaces()`, hooks `useWorkspaces`, `useRenameWorkspace`,
+  `useDeleteWorkspace`, `useReorderWorkspaces`. Icon added: `ArrowUpDown`.
+
+**Verified.** tsc ✅ · lint ✅ · expo-doctor 20/20 ✅ · iOS bundle ✅. **Not click-tested on a
+Simulator** (this session ran on Windows) — test plan in `docs/02-STATUS.md`. No new packages,
+no native changes.
+
 ## 2026-11-19 — Workspace board, task screen, members, request update; loose ends
 
 **Backend is live.** PR #3 merged and deployed at `https://www.ninjaloop.com.au` (the bare domain

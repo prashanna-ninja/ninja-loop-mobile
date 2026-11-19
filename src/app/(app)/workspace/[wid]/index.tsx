@@ -9,7 +9,7 @@ import { PressableSurface } from "@/components/pressable-surface";
 import { HeaderIconButton, ScreenHeader } from "@/components/screen-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCreateTask, useUpdateTask, useWorkspace, useWorkspaceTasks } from "@/api/workspaces.api";
-import { Eye, EyeOff, ListTodo, Megaphone, Users } from "@/lib/icons";
+import { Eye, EyeOff, ListTodo, Megaphone, Settings, Users } from "@/lib/icons";
 import { useThemeColors } from "@/lib/theme";
 
 const ROLE_LABEL = { OWNER: "Owner", ADMIN: "Admin", MEMBER: "Member" } as const;
@@ -86,6 +86,13 @@ export default function BoardScreen() {
               onPress={() => setShowDone((v) => !v)}
               color={showDone ? c.primary : undefined}
             />
+            {ws && ws.role !== "MEMBER" ? (
+              <HeaderIconButton
+                icon={Settings}
+                label="Workspace settings"
+                onPress={() => router.push({ pathname: "/workspace/[wid]/settings", params: { wid } })}
+              />
+            ) : null}
           </>
         }
       />

@@ -2,7 +2,15 @@ import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tansta
 
 import { apiFetch } from "@/lib/api-client";
 import { qk } from "@/lib/query-keys";
-import type { Member, TaskDetail, TaskPatch, TaskSummary, Workspace } from "@/types/api.types";
+import type {
+  Dashboard,
+  DashboardWorkspace,
+  Member,
+  TaskDetail,
+  TaskPatch,
+  TaskSummary,
+  Workspace,
+} from "@/types/api.types";
 
 const base = (wid: string) => `/api/mobile/v1/workspaces/${wid}`;
 
@@ -168,7 +176,21 @@ export function useRequestPriority(wid: string) {
   });
 }
 
-/** POST /workspaces — you become OWNER. Returns `{ id, slug }`. */
+/** After a workspace is created / renamed / deleted / reordered: every list that shows workspaces. */
+function invalidateWorkspaceLists(qc: QueryClient) {
+  void qc.invalidateQueries({ queryKey: qk.dashboard() });
+  void qc.invalidateQueries({ queryKey: qk.workspaces() });
+}
+
+/** GET /workspaces — the same items as `dashboard.workspaces`, in your personal order. */
+export function useWorkspaces() {
+  return useQuery({
+    queryKey: qk.workspaces(),
+    queryFn: () => apiFetch<DashboardWorkspace[]>("/api/mobile/v1/workspaces"),
+  });
+}
+
+/** POST /workspaces — you become OWNER. `name` 1–100 chars. Returns `{ id, slug }`. */
 export function useCreateWorkspace() {
   const qc = useQueryClient();
   return useMutation({
@@ -177,6 +199,62 @@ export function useCreateWorkspace() {
         method: "POST",
         body: JSON.stringify({ name }),
       }),
-    onSettled: () => void qc.invalidateQueries({ queryKey: qk.dashboard() }),
+    onSettled: () => invalidateWorkspaceLists(qc),
+  });
+}
+
+/** PATCH /workspaces/:wid `{ name }` (OWNER / ADMIN) → the updated Workspace. */
+export function useRenameWorkspace(wid: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (name: string) =>
+      apiFetch<Workspace>(base(wid), { method: "PATCH", body: JSON.stringify({ name }) }),
+    onSuccess: (ws) => qc.setQueryData(qk.workspace(wid), ws),
+    onSettled: () => invalidateWorkspaceLists(qc),
+  });
+}
+
+/** DELETE /workspaces/:wid (OWNER only) — the workspace and all its tasks. */
+export function useDeleteWorkspace(wid: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => apiFetch<void>(base(wid), { method: "DELETE" }),
+    onSuccess: () => {
+      // The caller navigates away (dismissTo "/"). Drop this workspace's cache only
+      // AFTER its screens unmount — removing it under mounted observers makes them
+      // refetch and flash "Workspace not found." first.
+      void qc.cancelQueries({ queryKey: qk.workspace(wid) });
+      setTimeout(() => qc.removeQueries({ queryKey: qk.workspace(wid) }), 1000);
+      invalidateWorkspaceLists(qc);
+      void qc.invalidateQueries({ queryKey: qk.notifications() });
+    },
+  });
+}
+
+/**
+ * PUT /workspaces/order `{ orderedIds }` — your personal order (every id must be
+ * a workspace you're in). Optimistic on the dashboard and the workspaces list.
+ */
+export function useReorderWorkspaces() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (orderedIds: string[]) =>
+      apiFetch<void>("/api/mobile/v1/workspaces/order", { method: "PUT", body: JSON.stringify({ orderedIds }) }),
+    onMutate: async (orderedIds) => {
+      await qc.cancelQueries({ queryKey: qk.dashboard() });
+      await qc.cancelQueries({ queryKey: qk.workspaces() });
+      const prevDashboard = qc.getQueryData<Dashboard>(qk.dashboard());
+      const prevList = qc.getQueryData<DashboardWorkspace[]>(qk.workspaces());
+      const sort = (list: DashboardWorkspace[]) =>
+        [...list].sort((a, b) => orderedIds.indexOf(a.id) - orderedIds.indexOf(b.id));
+      if (prevDashboard) qc.setQueryData(qk.dashboard(), { ...prevDashboard, workspaces: sort(prevDashboard.workspaces) });
+      if (prevList) qc.setQueryData(qk.workspaces(), sort(prevList));
+      return { prevDashboard, prevList };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prevDashboard) qc.setQueryData(qk.dashboard(), ctx.prevDashboard);
+      if (ctx?.prevList) qc.setQueryData(qk.workspaces(), ctx.prevList);
+    },
+    onSettled: () => invalidateWorkspaceLists(qc),
   });
 }

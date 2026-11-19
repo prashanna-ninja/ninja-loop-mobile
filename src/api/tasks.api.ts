@@ -109,13 +109,22 @@ export function useDeleteLink(wid: string, tid: string) {
 
 /* ── Assignees ───────────────────────────────────────────────────────── */
 
-/** PUT …/assignees — replaces the list (at least one id, all members). */
+/**
+ * PUT …/assignees — replaces the list (at least one id, all members).
+ * ⚠️ Unlike GET / PATCH, the server's response has NO `links` field (it calls
+ * serializeTaskDetail without them; MOBILE-API.md says TaskDetail). Keep the cached
+ * links, or the task screen crashes on `links.map`.
+ */
 export function useSetAssignees(wid: string, tid: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (userIds: string[]) =>
-      apiFetch<TaskDetail>(`${taskPath(wid, tid)}/assignees`, { method: "PUT", body: JSON.stringify({ userIds }) }),
-    onSuccess: (task) => qc.setQueryData(qk.task(wid, tid), task),
+      apiFetch<Omit<TaskDetail, "links"> & { links?: TaskDetail["links"] }>(`${taskPath(wid, tid)}/assignees`, {
+        method: "PUT",
+        body: JSON.stringify({ userIds }),
+      }),
+    onSuccess: (task) =>
+      qc.setQueryData<TaskDetail>(qk.task(wid, tid), (prev) => ({ ...task, links: task.links ?? prev?.links ?? [] })),
     onSettled: () => invalidateWorkspace(qc, wid),
   });
 }

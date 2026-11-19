@@ -1,4 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
+import { router } from "expo-router";
 import * as React from "react";
 import { RefreshControl, ScrollView, Text, View } from "react-native";
 
@@ -9,12 +10,31 @@ import { StatStrip } from "@/components/dashboard/stat-strip";
 import { UrgentTaskRow } from "@/components/dashboard/urgent-task-row";
 import { WorkspaceCard } from "@/components/dashboard/workspace-card";
 import { FadeIn } from "@/components/login/fade-in";
+import { PressableSurface } from "@/components/pressable-surface";
 import { EmptyState, ErrorState, SectionHeader } from "@/components/screen-states";
 import { firstName, greeting } from "@/lib/format";
-import { CircleCheck, Layers } from "@/lib/icons";
+import { ArrowUpDown, CircleCheck, Layers, Plus } from "@/lib/icons";
 import { qk } from "@/lib/query-keys";
 import { useThemeColors } from "@/lib/theme";
 import { useSession } from "@/providers/session-provider";
+
+/** "+ New" pill → the create-workspace screen (header size, or larger under the empty state). */
+function NewWorkspaceButton({ large = false }: { large?: boolean }) {
+  const c = useThemeColors();
+  return (
+    <PressableSurface
+      onPress={() => router.push("/workspace/new")}
+      accessibilityLabel="New workspace"
+      hitSlop={6}
+      className={`bg-primary/10 flex-row items-center gap-1 rounded-full ${large ? "px-4 py-2.5" : "px-3 py-1.5"}`}
+    >
+      <Plus size={large ? 17 : 15} color={c.primary} strokeWidth={2.4} />
+      <Text className={`font-sans-semibold text-primary ${large ? "text-[14.5px]" : "text-[13px]"}`}>
+        {large ? "New workspace" : "New"}
+      </Text>
+    </PressableSurface>
+  );
+}
 
 /**
  * Home — web /dashboard: greeting, "this week at a glance", urgent tasks
@@ -80,14 +100,33 @@ export default function DashboardScreen() {
             </FadeIn>
 
             <FadeIn delay={180} style={{ gap: 12 }}>
-              <SectionHeader title="Workspaces" count={data.workspaces.length || undefined} />
+              <SectionHeader
+                title="Workspaces"
+                count={data.workspaces.length || undefined}
+                right={
+                  <>
+                    {data.workspaces.length > 1 ? (
+                      <PressableSurface
+                        onPress={() => router.push("/reorder-workspaces")}
+                        accessibilityLabel="Reorder workspaces"
+                        hitSlop={6}
+                        className="h-9 w-9 items-center justify-center rounded-full"
+                      >
+                        <ArrowUpDown size={18} color={c.mutedForeground} strokeWidth={2} />
+                      </PressableSurface>
+                    ) : null}
+                    <NewWorkspaceButton />
+                  </>
+                }
+              />
               {data.workspaces.length === 0 ? (
-                <View className="bg-card border-border rounded-2xl border">
+                <View className="bg-card border-border items-center rounded-2xl border pb-6">
                   <EmptyState
                     icon={Layers}
                     title="No workspaces yet"
                     body="Create one, or accept an invite, and its priority queue will appear here."
                   />
+                  <NewWorkspaceButton large />
                 </View>
               ) : (
                 data.workspaces.map((w) => <WorkspaceCard key={w.id} workspace={w} />)

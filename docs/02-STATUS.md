@@ -14,32 +14,44 @@ Backend: `https://www.ninjaloop.com.au` (Vercel). API reference: `ref/ninja-loop
 | Board | `workspace/[wid]`: queue, add task (top), complete / reopen from the node, show done | ⚠️ |
 | Task | `workspace/[wid]/task/[tid]`: title / notes, complete, move (top / up / down), due, blocked, snooze, assignees, checklist, links, comments, delete, request update | ⚠️ |
 | Members | `workspace/[wid]/members` (read-only) | ⚠️ |
+| Create workspace | Dashboard "Workspaces" → **+ New** (also under the empty state) → `workspace/new` → opens the new board | ⚠️ new |
+| Workspace settings | Board ⚙ (owner / admin) → `workspace/[wid]/settings`: rename (admin), delete after typing the name (owner) | ⚠️ new |
+| Reorder workspaces | Dashboard "Workspaces" ⇅ (2+ workspaces) → `reorder-workspaces`: up / down, Save order | ⚠️ new |
 | Request update | `workspace/[wid]/request` (non-owners; optional task) | ⚠️ |
 | Settings | Profile, open web, version, privacy / terms, sign out, delete account | ⚠️ |
 
-**First thing next session:** click through every ⚠️ row against production on a device /
-Simulator and fix what breaks (shapes were matched to MOBILE-API.md, but nothing beyond
-sign-in has been exercised against the live server yet).
+**First thing next session — click-test on the iOS Simulator against production.** All API
+calls were checked against the backend *source* on 2026-11-19 (one crash fixed, see log); nothing
+beyond sign-in has been exercised live yet. Run `npx expo start -c` (the `.env` URL changed), then:
+
+1. Dashboard: counts, urgent rows → task, workspace cards → board, pull to refresh.
+2. **+ New** → create "Test WS" → lands on its empty board → Back → it's on the dashboard.
+3. Board: add 3 tasks (newest on top), complete via the node, show / hide done, pull to refresh.
+4. Task: edit title / notes (blur saves), To top / Up / Down, due + snooze picks, block / unblock,
+   **change assignees** (was the crash), checklist add / tick / delete, add / open / remove link,
+   comment, delete task.
+5. Board ⚙ → rename (dashboard + board title update) → Members row → delete "Test WS" (type the
+   name) → back on the dashboard, workspace gone.
+6. ⇅ Reorder with 2+ workspaces → Save → dashboard order matches the web.
+7. Alerts: open a task / Inbox notification, mark all read (badge drops). Inbox: Mark done.
+8. As a non-owner (second account): Request update from board and task → owner's Inbox.
+9. Settings: open web, privacy / terms, sign out → sign back in.
 
 ## Not built yet (in rough priority order)
 
-1. **Create workspace** — hook exists (`useCreateWorkspace`), no UI. Natural place: a "+" on the
-   Dashboard "Workspaces" header → a small form screen → navigate to the new board.
-2. **Workspace settings** — rename (`PATCH /workspaces/:wid`, admin), delete (owner), workspace
-   reorder (`PUT /workspaces/order`).
-3. **Invites** — list / send / revoke (`/workspaces/:wid/invites`, admin) and **accepting** an
+1. **Invites** — list / send / revoke (`/workspaces/:wid/invites`, admin) and **accepting** an
    invite: `GET /invites/:token` + `POST /invites/:token/accept`. Needs universal links for
    `https://www.ninjaloop.com.au/invite/<token>` (app.json `ios.associatedDomains` +
    `android.intentFilters`, plus `apple-app-site-association` / `assetlinks.json` on the server).
-4. **Drag to reorder** the queue (today: To top / Up / Down on the task screen). Would need
+2. **Drag to reorder** the queue (today: To top / Up / Down on the task screen). Would need
    `react-native-draggable-flatlist` or a Reanimated gesture list (native → rebuild).
-5. **File upload** from the phone (3-step presigned flow in MOBILE-API.md; needs
+3. **File upload** from the phone (3-step presigned flow in MOBILE-API.md; needs
    `expo-document-picker` / `expo-image-picker` → rebuild). Links work today.
-6. **Custom due date / time** — today quick picks only (Today, Tomorrow, Friday, Next Monday,
+4. **Custom due date / time** — today quick picks only (Today, Tomorrow, Friday, Next Monday,
    In 2 weeks; snooze: Tomorrow 9am, Monday 9am, In a week). A real picker needs
    `@react-native-community/datetimepicker` (native → rebuild).
-7. **Push notifications** — backend not built (no `PushDevice` / `POST /devices` yet).
-8. Edit / delete comments, subtask rename / reorder, "clear completed" subtasks — API exists.
+5. **Push notifications** — backend not built (no `PushDevice` / `POST /devices` yet).
+6. Edit / delete comments, subtask rename / reorder, "clear completed" subtasks — API exists.
 
 ## Before the App Store
 
@@ -53,6 +65,12 @@ sign-in has been exercised against the live server yet).
 - `eas build --profile production` + `eas submit`.
 
 ## Known issues / watch-outs
+
+- **Backend bugs to report** (the app works around / can't fix):
+  - `PUT …/tasks/:tid/assignees` returns a TaskDetail **without `links`** (route calls
+    `serializeTaskDetail` with no links; MOBILE-API.md says TaskDetail). App keeps cached links.
+  - Dashboard / `GET /workspaces` `nextPriorityTaskTitle` can be a **completed** task:
+    `getDashboardWorkspaces` (`lib/services/workspace.ts` ~L202) filters `lane` but not `completedAt: null`.
 
 - The bare domain `ninjaloop.com.au` 307-redirects to `www` — the app MUST use `https://www.ninjaloop.com.au`.
 - Production auth 500'd on every `/api/auth/*` call until the `rateLimit` table existed in the

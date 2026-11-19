@@ -13,6 +13,9 @@ export const qk = {
   /** GET /api/mobile/v1/requests — incoming priority requests. */
   requests: () => ["requests"] as const,
 
+  /** GET /api/mobile/v1/workspaces — your workspaces in your personal order. */
+  workspaces: () => ["workspaces"] as const,
+
   /** GET /workspaces/:wid (+ members). Prefix `workspace(wid)` invalidates all of a workspace. */
   workspace: (wid: string) => ["workspace", wid] as const,
   members: (wid: string) => ["workspace", wid, "members"] as const,
