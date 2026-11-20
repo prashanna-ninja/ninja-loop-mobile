@@ -15,7 +15,7 @@ const KIND_ICON: Record<string, IconComponent> = {
 
 /**
  * One notification. Unread = bold title + a primary dot. Tapping marks it read
- * and opens its target (see alerts.tsx `openTarget`).
+ * and opens its target (see lib/notification-target.ts).
  */
 export function NotificationRow({ item, onPress }: { item: NotificationItem; onPress: () => void }) {
   const c = useThemeColors();

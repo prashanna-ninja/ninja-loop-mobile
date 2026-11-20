@@ -1,5 +1,35 @@
 # Implementation log (newest first)
 
+## 2026-11-19 — Push notifications (app side) + backend guide
+
+**⚠️ Native change — rebuild needed:** added `expo-notifications` + `expo-device`; app.json plugin
+`["expo-notifications", { color, defaultChannel: "default" }]` (adds the iOS `aps-environment`
+entitlement). Also needs `npx eas-cli init` (app.json `extra.eas.projectId` — without it the app
+can't get a push token) and an APNs key in EAS. Then `npx expo prebuild --clean && npx expo run:ios`.
+
+Ported from Ninja CRM mobile (`push-provider` / `push-bridge` / `push.api`), trimmed to Ninja Loop:
+- **`providers/push-provider.tsx`** (under SessionProvider): OS permission (`canAskAgain`, not
+  `status`, decides "blocked" — Android's dismissed prompt is re-askable), Expo token, register on
+  every launch while on, per-category switches (PATCH), off = DELETE the device row, owner guard
+  (another person signing in on the phone starts with push off), finishes an interrupted enable when
+  you come back from the Settings app. Android channel `default` created before asking.
+- **Sign-out** now runs `addBeforeSignOut` hooks (session-provider) before `authClient.signOut()`,
+  so the device row is deleted while the cookie still works; 3 s cap, and a re-entrancy guard (a
+  hook's 401 would otherwise call signOut again).
+- **`components/notifications/push-bridge.tsx`** (in `(app)/_layout`): tap → mark read + open the
+  same `target` as the Alerts row (cold start via `getLastNotificationResponse()` + clear; no target
+  → Alerts); icon badge = `me.counts.unreadNotifications`; a push in the foreground refreshes Alerts
+  + badges. `openTarget` moved to `lib/notification-target.ts` (shared with Alerts).
+- **UI:** Settings → Notifications (switch + Assigned to me / Comments / Priority requests / Due
+  tomorrow, status line incl. "server isn't sending pushes yet" on 404); Alerts → one-time "Get
+  these on your phone · Turn on" banner (the soft ask before iOS's one-shot prompt).
+- **Contract** (`api/push.api.ts`, `lib/push-categories.ts`): `POST /devices`, `PATCH|DELETE
+  /devices/:token`, prefs `{assigned, comments, requests, due}` (all default on), push `data`
+  `{ notificationId, kind, target }`. Calls fail quietly (404 = backend not shipped).
+- **`docs/04-BACKEND-PUSH.md`**: the backend build — PushDevice / PushDelivery / PushTicket,
+  outbox in the notification transaction, QStash → `/api/push/worker` → Expo, receipts after 15 min
+  (dead-token cleanup), `task_due` from the due-reminder cron, credentials, test plan.
+
 ## 2026-11-19 — Invites: send / revoke, accept, invite links
 
 **⚠️ Native change — rebuild needed:** app.json `ios.associatedDomains`

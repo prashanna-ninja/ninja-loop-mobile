@@ -1,29 +1,16 @@
-import { router } from "expo-router";
-import * as WebBrowser from "expo-web-browser";
 import { FlatList, RefreshControl, Text, View } from "react-native";
 import * as React from "react";
 
 import { useMarkAllNotificationsRead, useMarkNotificationRead, useNotifications } from "@/api/notifications.api";
 import { AppHeader } from "@/components/app-header";
 import { NotificationRow } from "@/components/notifications/notification-row";
+import { PushPrompt } from "@/components/notifications/push-prompt";
 import { PressableSurface } from "@/components/pressable-surface";
 import { EmptyState, ErrorState } from "@/components/screen-states";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Bell, CheckCheck } from "@/lib/icons";
+import { openNotificationTarget } from "@/lib/notification-target";
 import { useThemeColors } from "@/lib/theme";
-import type { NotificationTarget } from "@/types/api.types";
-
-/** Deep-link a notification (MOBILE-API.md: use `target`, ignore the web `href`). */
-function openTarget(target: NotificationTarget | null) {
-  if (!target) return;
-  if (target.type === "task") {
-    router.push({ pathname: "/workspace/[wid]/task/[tid]", params: { wid: target.workspaceId, tid: target.taskId } });
-  } else if (target.type === "requests") {
-    router.navigate("/inbox");
-  } else if (target.type === "url" && /^https?:\/\//i.test(target.href)) {
-    void WebBrowser.openBrowserAsync(target.href);
-  }
-}
 
 /**
  * Alerts — web /dashboard/notifications: assignments, comments and priority
@@ -74,6 +61,7 @@ export default function AlertsScreen() {
               ) : null}
             </View>
             <Text className="text-muted-foreground font-sans text-[13px]">Assignments, comments and requests.</Text>
+            <PushPrompt />
           </View>
         }
         renderItem={({ item }) => (
@@ -81,7 +69,7 @@ export default function AlertsScreen() {
             item={item}
             onPress={() => {
               if (!item.readAt) markRead.mutate(item.id);
-              openTarget(item.target);
+              openNotificationTarget(item.target);
             }}
           />
         )}

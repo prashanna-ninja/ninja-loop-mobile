@@ -19,7 +19,8 @@ Backend: `https://www.ninjaloop.com.au` (Vercel). API reference: `ref/ninja-loop
 | Workspace settings | Board ⚙ (owner / admin) → `workspace/[wid]/settings`: rename (admin), delete after typing the name (owner) | ⚠️ new |
 | Workspaces tab | 2nd tab: all workspaces in your order; **hold & drag to reorder** (springs + haptics, `PUT /workspaces/order` on drop, optimistic); tap → board; + New. VoiceOver: Move up / down actions | ⚠️ new |
 | Request update | `workspace/[wid]/request` (non-owners; optional task) | ⚠️ |
-| Settings | Profile, open web, **Appearance (System / Light / Dark, remembered)**, version, privacy / terms, sign out, delete account | ⚠️ |
+| Settings | Profile, open web, **Notifications**, **Appearance (System / Light / Dark, remembered)**, version, privacy / terms, sign out, delete account | ⚠️ |
+| Push notifications | App side: opt-in (Alerts banner / Settings), 4 categories, register / unregister (also on sign-out), tap → task / Inbox, icon badge | ❌ backend not built — `docs/04-BACKEND-PUSH.md`; needs `eas init` + rebuild |
 
 **First thing next session — click-test on the iOS Simulator against production.** All API
 calls were checked against the backend *source* on 2026-11-19 (one crash fixed, see log); nothing
@@ -50,14 +51,19 @@ beyond sign-in has been exercised live yet. Run `npx expo start -c` (the `.env` 
    in B's lists. Wrong account: open A's invite link while signed in as C → "Sign out and use …".
    With the server files live + rebuild: tap the link in Mail → app opens the invite (also
    when signed out: sign in → invite opens).
-11. Settings: Appearance → Light / Dark / System (every screen + tab bar + status bar flip; kill and
+11. Push (real iPhone, after `eas init` + rebuild + backend): Alerts → Turn on → allow → Settings
+   shows "On for this phone"; second account assigns you / comments / sends a request → push →
+   tap opens the task / Inbox; turn a category off → no push but the Alerts row appears; sign out
+   → device row gone.
+12. Settings: Appearance → Light / Dark / System (every screen + tab bar + status bar flip; kill and
    relaunch keeps it); open web, privacy / terms, sign out → sign back in.
 
 ## Not built yet (in rough priority order)
 
 1. **Server: universal-link files** — `docs/03-BACKEND-UNIVERSAL-LINKS.md` (AASA + assetlinks).
    Until then invite links open the web page; "Join with a link" works in the app.
-2. **Push notifications** — backend not built (no `PushDevice` / `POST /devices` yet).
+2. **Push notifications — backend** — app side done; build `docs/04-BACKEND-PUSH.md` in the web
+   repo (Upstash QStash + Expo). Also `npx eas-cli init` (projectId) + APNs key, then rebuild.
 3. Not possible: edit / delete comments, remove members / change roles, leave workspace —
    neither the web nor the mobile API has them.
 4. Billing / upgrade — web-only (Stripe); keep it off the app (App Store in-app purchase rules).

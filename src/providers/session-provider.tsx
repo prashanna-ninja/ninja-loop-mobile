@@ -20,6 +20,23 @@ type SessionState = {
 const SessionContext = React.createContext<SessionState | null>(null);
 
 /**
+ * Work that must run BEFORE the server session goes, while the cookie still works —
+ * e.g. the push provider deleting this phone's device row so it stops receiving the
+ * previous user's notifications. Each hook gets at most 3 s; sign-out never waits longer.
+ */
+const beforeSignOut = new Set<() => Promise<void>>();
+export function addBeforeSignOut(hook: () => Promise<void>): () => void {
+  beforeSignOut.add(hook);
+  return () => {
+    beforeSignOut.delete(hook);
+  };
+}
+function runBeforeSignOut(): Promise<unknown> {
+  const timeout = new Promise((resolve) => setTimeout(resolve, 3000));
+  return Promise.race([Promise.allSettled([...beforeSignOut].map((hook) => hook())), timeout]);
+}
+
+/**
  * The app's session, held in plain React state.
  *
  * ⚠️ DO NOT replace this with better-auth's `useSession()` (from `better-auth/react`).
@@ -64,13 +81,20 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     void load();
   }, [load]);
 
+  // A before-sign-out hook's request can 401 → apiFetch calls signOut again. Run once.
+  const signingOutRef = React.useRef(false);
+
   const signOut = React.useCallback(async () => {
+    if (signingOutRef.current) return;
+    signingOutRef.current = true;
     // Optimistic: the guard moves immediately; a failed server sign-out still
     // means the session is gone as far as this device cares.
     requestIdRef.current++;
     setData(null);
     setError(null);
     try {
+      // The cookie is still stored until authClient.signOut() below.
+      await runBeforeSignOut();
       await authClient.signOut();
     } catch {
       // Already cleared locally.
@@ -78,6 +102,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       // Drop every cached query so the next person on this device never sees
       // the previous user's data.
       queryClient.clear();
+      signingOutRef.current = false;
     }
   }, []);
 

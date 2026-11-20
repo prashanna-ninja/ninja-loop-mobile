@@ -14,7 +14,9 @@
         "ITSAppUsesNonExemptEncryption": false
       },
       "usesAppleSignIn": true,
-      "associatedDomains": ["applinks:www.ninjaloop.com.au"]
+      "associatedDomains": [
+        "applinks:www.ninjaloop.com.au"
+      ]
     },
     "android": {
       "package": "com.adviceninja.ninjaloop",
@@ -29,8 +31,17 @@
         {
           "action": "VIEW",
           "autoVerify": true,
-          "data": [{ "scheme": "https", "host": "www.ninjaloop.com.au", "pathPrefix": "/invite/" }],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "data": [
+            {
+              "scheme": "https",
+              "host": "www.ninjaloop.com.au",
+              "pathPrefix": "/invite/"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -65,6 +76,13 @@
           "cameraPermission": "Ninja Loop uses the camera so you can photograph something and attach it to a task.",
           "microphonePermission": false
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#005189",
+          "defaultChannel": "default"
+        }
       ]
     ],
     "experiments": {
@@ -72,7 +90,14 @@
       "reactCompiler": true
     },
     "extra": {
-      "router": {}
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "9404fde0-3c52-4e4a-a3ed-28a26f1d6a33"
+      }
     }
   }
 }

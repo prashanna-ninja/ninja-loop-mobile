@@ -1,6 +1,7 @@
 import { router, Stack } from "expo-router";
 import * as React from "react";
 
+import { PushBridge } from "@/components/notifications/push-bridge";
 import { takePendingInvite, usePendingInvite } from "@/lib/pending-invite";
 
 /**
@@ -22,8 +23,12 @@ export default function AppLayout() {
   }, [pendingInvite]);
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(tabs)" options={{ animation: "fade" }} />
-    </Stack>
+    <>
+      {/* Push taps → task / Inbox / Alerts; icon badge = unread. */}
+      <PushBridge />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" options={{ animation: "fade" }} />
+      </Stack>
+    </>
   );
 }

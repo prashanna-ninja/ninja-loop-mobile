@@ -8,6 +8,7 @@ import { AppHeader } from "@/components/app-header";
 import { FadeIn } from "@/components/login/fade-in";
 import { describeLoadError } from "@/components/screen-states";
 import { AppearancePicker } from "@/components/settings/appearance-picker";
+import { NotificationSettings } from "@/components/settings/notification-settings";
 import { SettingsGroup, SettingsRow } from "@/components/settings/settings-group";
 import { API_BASE_URL, PRIVACY_URL, TERMS_URL } from "@/constants/env";
 import { initials } from "@/lib/format";
@@ -84,7 +85,11 @@ export default function SettingsScreen() {
           </SettingsGroup>
         </FadeIn>
 
-        <FadeIn delay={150}>
+        <FadeIn delay={140}>
+          <NotificationSettings />
+        </FadeIn>
+
+        <FadeIn delay={160}>
           <AppearancePicker />
         </FadeIn>
 

@@ -11,6 +11,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { appFonts } from "@/lib/fonts";
 import { loadThemePreference } from "@/lib/theme-preference";
+import { PushProvider } from "@/providers/push-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { SessionProvider, useSession } from "@/providers/session-provider";
 
@@ -68,7 +69,9 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryProvider>
         <SessionProvider>
-          <RootNavigator />
+          <PushProvider>
+            <RootNavigator />
+          </PushProvider>
         </SessionProvider>
       </QueryProvider>
     </GestureHandlerRootView>
